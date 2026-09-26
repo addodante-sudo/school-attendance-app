@@ -3,39 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Primary School Attendance</title>
+  <title>Primary School Attendance | Addodante Hub</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Enable class-based Dark Mode in Tailwind
+    // Enable class-based Dark Mode and custom brand color in Tailwind
     tailwind.config = {
-      darkMode: 'class'
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#1a7930',
+              600: '#156327',
+              700: '#114f1f',
+              800: '#0d3d18',
+              900: '#092a11',
+            }
+          }
+        }
+      }
     }
   </script>
 </head>
-<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-screen transition-colors duration-200">
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200">
 
   <!-- Header -->
-  <header class="bg-teal-700 dark:bg-teal-900 text-white p-4 shadow-md sticky top-0 z-10 transition-colors duration-200">
+  <header class="bg-brand-600 dark:bg-brand-900 text-white p-4 shadow-md sticky top-0 z-10 transition-colors duration-200">
     <div class="max-w-md mx-auto flex justify-between items-center">
-      <div>
-        <h1 class="font-bold text-lg leading-tight">School Register</h1>
-        <span class="text-xs text-teal-200">Kumasi Edition</span>
+      <div class="flex items-center gap-3">
+        <!-- Addodante Hub Logo Image -->
+        <img src="logo.png" alt="Addodante Hub Logo" class="h-9 w-9 object-contain bg-white rounded-md p-0.5 shadow-sm" onerror="this.style.display='none'; document.getElementById('logoFallback').classList.remove('hidden');">
+        
+        <!-- Logo Fallback (If logo.png is not found) -->
+        <div id="logoFallback" class="hidden h-9 w-9 bg-white text-brand-600 font-black text-lg flex items-center justify-center rounded-md shadow-sm">
+          A
+        </div>
+
+        <div>
+          <h1 class="font-bold text-base leading-tight">School Register</h1>
+          <p class="text-xs text-brand-100">Powered by <span class="font-semibold text-white">ADDODANTE HUB</span></p>
+        </div>
       </div>
       
       <!-- Dark Mode Toggle Button -->
-      <button onclick="toggleDarkMode()" class="p-2 bg-teal-800 dark:bg-teal-800 hover:bg-teal-600 rounded-full transition-colors text-sm flex items-center gap-1">
+      <button onclick="toggleDarkMode()" class="p-2 bg-brand-700 dark:bg-brand-800 hover:bg-brand-500 rounded-full transition-colors text-sm flex items-center justify-center shadow-inner">
         <span id="themeIcon">🌙</span>
       </button>
     </div>
   </header>
 
-  <main class="max-w-md mx-auto p-4 pb-20">
+  <main class="max-w-md mx-auto p-4 pb-24 flex-1 w-full">
     <!-- Class Filter & Add Student Button -->
     <div class="bg-white dark:bg-slate-800 p-3 rounded-lg shadow-sm mb-4 flex justify-between items-center border border-slate-200 dark:border-slate-700 transition-colors">
       <div class="flex items-center gap-2">
         <label for="classSelect" class="font-semibold text-sm">Class:</label>
-        <select id="classSelect" onchange="renderRoster()" class="border border-slate-300 dark:border-slate-600 rounded p-1 text-sm bg-slate-50 dark:bg-slate-700 dark:text-white">
+        <select id="classSelect" onchange="renderRoster()" class="border border-slate-300 dark:border-slate-600 rounded p-1 text-sm bg-slate-50 dark:bg-slate-700 dark:text-white font-medium">
           <option value="Basic 1">Basic 1</option>
           <option value="Basic 2">Basic 2</option>
           <option value="Basic 3" selected>Basic 3</option>
@@ -46,7 +71,7 @@
       </div>
 
       <!-- Add Student Button -->
-      <button onclick="openAddModal()" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white font-semibold text-xs rounded-lg flex items-center gap-1 transition-all shadow-sm">
+      <button onclick="openAddModal()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-semibold text-xs rounded-lg flex items-center gap-1 transition-all shadow-sm">
         <span class="text-sm font-bold">+</span> Add Pupil
       </button>
     </div>
@@ -83,12 +108,12 @@
         <div class="space-y-3">
           <div>
             <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Full Name</label>
-            <input type="text" id="newName" required placeholder="e.g. Kwaku Mensah" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-sm bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <input type="text" id="newName" required placeholder="e.g. Kwaku Mensah" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-sm bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
           </div>
 
           <div>
             <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Class</label>
-            <select id="newClass" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-sm bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <select id="newClass" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-sm bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
               <option value="Basic 1">Basic 1</option>
               <option value="Basic 2">Basic 2</option>
               <option value="Basic 3">Basic 3</option>
@@ -100,17 +125,25 @@
 
           <div>
             <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Parent Phone Number</label>
-            <input type="tel" id="newPhone" required placeholder="e.g. 0241234567" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-sm bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <input type="tel" id="newPhone" required placeholder="e.g. 0241234567" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-sm bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
           </div>
         </div>
 
         <div class="flex justify-end gap-2 mt-5">
           <button type="button" onclick="closeAddModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancel</button>
-          <button type="submit" class="px-4 py-1.5 text-xs font-semibold rounded-lg text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow">Save Pupil</button>
+          <button type="submit" class="px-4 py-1.5 text-xs font-semibold rounded-lg text-white bg-brand-600 hover:bg-brand-700 transition-colors shadow">Save Pupil</button>
         </div>
       </form>
     </div>
   </div>
+
+  <!-- Footer Developer Branding -->
+  <footer class="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-3 text-center text-xs border-t border-slate-300 dark:border-slate-700 transition-colors">
+    <div class="max-w-md mx-auto flex items-center justify-center gap-1.5">
+      <span>Developed & Maintained by</span>
+      <span class="font-bold text-brand-600 dark:text-brand-500">ADDODANTE HUB</span>
+    </div>
+  </footer>
 
   <script>
     // Theme setup
@@ -223,7 +256,7 @@
         listContainer.innerHTML = `
           <div class="text-center py-8 text-slate-400 dark:text-slate-500 text-xs">
             No pupils added to ${selectedClass} yet.<br>
-            Tap <strong class="text-teal-600 dark:text-teal-400">+ Add Pupil</strong> to start.
+            Tap <strong class="text-brand-600 dark:text-brand-400">+ Add Pupil</strong> to start.
           </div>
         `;
         return;
@@ -244,7 +277,7 @@
             <button onclick="updateStatus('${s.id}', 'absent')" class="px-2 py-1 text-xs rounded font-semibold transition-colors ${s.status === 'absent' ? 'bg-rose-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}">A</button>
             
             ${s.status === 'absent' ? `
-              <button onclick="sendWhatsApp('${s.name}', '${s.phone}')" class="ml-1 p-1 bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 rounded hover:bg-teal-200 dark:hover:bg-teal-800 transition-colors">
+              <button onclick="sendWhatsApp('${s.name}', '${s.phone}')" class="ml-1 p-1 bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 rounded hover:bg-brand-200 dark:hover:bg-brand-800 transition-colors">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
               </button>
             ` : ''}
