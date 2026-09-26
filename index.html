@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Primary School Attendance | Addodante Hub</title>
+  <title>Addodante School Registry</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -26,113 +26,207 @@
       }
     }
   </script>
+  <style>
+    /* Hide scrollbar for clean horizontal week strip */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200">
 
-  <!-- Header -->
-  <header class="bg-brand-600 dark:bg-brand-900 text-white p-4 shadow-md sticky top-0 z-10 transition-colors duration-200">
+  <!-- Main Sticky Header -->
+  <header class="bg-brand-600 dark:bg-brand-900 text-white p-3.5 shadow-md sticky top-0 z-20 transition-colors duration-200">
     <div class="max-w-md mx-auto flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <!-- Logo Image -->
-        <img src="logo.png" alt="Addodante Hub Logo" class="h-9 w-9 object-contain bg-white rounded-md p-0.5 shadow-sm" onerror="this.style.display='none'; document.getElementById('logoFallback').classList.remove('hidden');">
-        
-        <!-- Logo Fallback -->
-        <div id="logoFallback" class="hidden h-9 w-9 bg-white text-brand-600 font-black text-lg flex items-center justify-center rounded-md shadow-sm">
-          A
-        </div>
-
+      <div class="flex items-center gap-2.5">
+        <img src="logo.png" alt="Addodante Hub Logo" class="h-9 w-9 object-contain bg-white rounded-lg p-0.5 shadow-sm" onerror="this.style.display='none'; document.getElementById('logoFallback').classList.remove('hidden');">
+        <div id="logoFallback" class="hidden h-9 w-9 bg-white text-brand-600 font-black text-lg flex items-center justify-center rounded-lg shadow-sm">A</div>
         <div>
-          <h1 class="font-bold text-base leading-tight">School Register</h1>
-          <p class="text-xs text-brand-100">Powered by <span class="font-semibold text-white">ADDODANTE HUB</span></p>
+          <h1 class="font-extrabold text-base leading-tight tracking-tight">School Registry</h1>
+          <p class="text-[11px] text-brand-100">by <span class="font-bold text-white">ADDODANTE HUB</span></p>
         </div>
       </div>
       
-      <!-- Dark Mode Toggle -->
-      <button onclick="toggleDarkMode()" class="p-2 bg-brand-700 dark:bg-brand-800 hover:bg-brand-500 rounded-full transition-colors text-sm flex items-center justify-center shadow-inner">
+      <!-- Dark Mode Toggle Button -->
+      <button onclick="toggleDarkMode()" class="p-2 bg-brand-700 dark:bg-brand-800 hover:bg-brand-500 rounded-full transition-colors text-sm shadow-inner">
         <span id="themeIcon">🌙</span>
       </button>
     </div>
   </header>
 
-  <main class="max-w-md mx-auto p-4 pb-28 flex-1 w-full">
+  <!-- Content Container -->
+  <main class="max-w-md mx-auto p-3.5 pb-24 flex-1 w-full">
     
-    <!-- Calendar & School Days Selector -->
-    <div class="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm mb-4 border border-slate-200 dark:border-slate-700 transition-colors">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
-          📅 School Calendar
-        </span>
-        <!-- Date Picker Input -->
-        <input type="date" id="datePicker" onchange="handleDateChange(this.value)" class="border border-slate-300 dark:border-slate-600 rounded px-2 py-0.5 text-xs bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white font-medium focus:outline-none focus:ring-1 focus:ring-brand-500">
+    <!-- VIEW 1: ATTENDANCE REGISTER -->
+    <section id="viewRegister" class="space-y-3.5">
+      
+      <!-- Calendar & Week Selector Card -->
+      <div class="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
+            📅 Attendance Date
+          </span>
+          <input type="date" id="datePicker" onchange="handleDateChange(this.value)" class="border border-slate-300 dark:border-slate-600 rounded px-2 py-0.5 text-xs bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white font-medium focus:outline-none focus:ring-1 focus:ring-brand-500">
+        </div>
+        <div id="weekDaysStrip" class="grid grid-cols-5 gap-1 pt-1"></div>
       </div>
 
-      <!-- Monday to Friday Weekday Pills -->
-      <div id="weekDaysStrip" class="grid grid-cols-5 gap-1 pt-1"></div>
-    </div>
+      <!-- Controls & Search -->
+      <div class="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-2 transition-colors">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 flex-1">
+            <label for="classSelect" class="font-bold text-xs text-slate-600 dark:text-slate-300">Class:</label>
+            <select id="classSelect" onchange="renderRoster()" class="border border-slate-300 dark:border-slate-600 rounded-lg p-1.5 text-xs font-bold bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white flex-1 focus:ring-2 focus:ring-brand-500">
+              <option value="Basic 1">Basic 1</option>
+              <option value="Basic 2">Basic 2</option>
+              <option value="Basic 3" selected>Basic 3</option>
+              <option value="Basic 4">Basic 4</option>
+              <option value="Basic 5">Basic 5</option>
+              <option value="Basic 6">Basic 6</option>
+            </select>
+          </div>
 
-    <!-- Class Filter & Add Pupil Button -->
-    <div class="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm mb-4 flex justify-between items-center border border-slate-200 dark:border-slate-700 transition-colors">
-      <div class="flex items-center gap-2">
-        <label for="classSelect" class="font-semibold text-sm">Class:</label>
-        <select id="classSelect" onchange="renderRoster()" class="border border-slate-300 dark:border-slate-600 rounded p-1 text-sm bg-slate-50 dark:bg-slate-700 dark:text-white font-medium">
+          <!-- Quick Bulk Action -->
+          <button onclick="markAllPresent()" class="px-2.5 py-1.5 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/50 dark:hover:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-300 font-bold text-xs rounded-lg transition-all flex items-center gap-1 shrink-0">
+            ✓ Mark All Present
+          </button>
+        </div>
+
+        <!-- Roster Search Bar -->
+        <input type="text" id="registerSearch" oninput="renderRoster()" placeholder="Search pupil name..." class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+
+      <!-- Live Summary Stats -->
+      <div class="grid grid-cols-4 gap-2 text-center">
+        <div class="bg-emerald-100 dark:bg-emerald-950 p-2 rounded-xl border border-emerald-200 dark:border-emerald-800">
+          <div id="countPresent" class="text-lg font-black text-emerald-700 dark:text-emerald-300">0</div>
+          <div class="text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-400">Present</div>
+        </div>
+        <div class="bg-amber-100 dark:bg-amber-950 p-2 rounded-xl border border-amber-200 dark:border-amber-800">
+          <div id="countLate" class="text-lg font-black text-amber-700 dark:text-amber-300">0</div>
+          <div class="text-[10px] uppercase font-bold text-amber-800 dark:text-amber-400">Late</div>
+        </div>
+        <div class="bg-rose-100 dark:bg-rose-950 p-2 rounded-xl border border-rose-200 dark:border-rose-800">
+          <div id="countAbsent" class="text-lg font-black text-rose-700 dark:text-rose-300">0</div>
+          <div class="text-[10px] uppercase font-bold text-rose-800 dark:text-rose-400">Absent</div>
+        </div>
+        <div class="bg-slate-200 dark:bg-slate-800 p-2 rounded-xl border border-slate-300 dark:border-slate-700">
+          <div id="countRate" class="text-lg font-black text-slate-700 dark:text-slate-300">0%</div>
+          <div class="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Rate</div>
+        </div>
+      </div>
+
+      <!-- Student Register List -->
+      <div id="studentList" class="space-y-2"></div>
+    </section>
+
+
+    <!-- VIEW 2: PUPILS DIRECTORY -->
+    <section id="viewPupils" class="hidden space-y-3.5">
+      <div class="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex justify-between items-center transition-colors">
+        <div>
+          <h2 class="font-bold text-sm">Pupil Roster Database</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Manage students & guardian contacts</p>
+        </div>
+        <button onclick="openAddModal()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs rounded-lg flex items-center gap-1 transition-all shadow">
+          <span>+</span> Add Pupil
+        </button>
+      </div>
+
+      <!-- Pupil Directory Filter & Search -->
+      <div class="grid grid-cols-3 gap-2">
+        <select id="directoryClassFilter" onchange="renderPupilDirectory()" class="col-span-1 border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-xs font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-white">
+          <option value="ALL">All Classes</option>
           <option value="Basic 1">Basic 1</option>
           <option value="Basic 2">Basic 2</option>
-          <option value="Basic 3" selected>Basic 3</option>
+          <option value="Basic 3">Basic 3</option>
           <option value="Basic 4">Basic 4</option>
           <option value="Basic 5">Basic 5</option>
           <option value="Basic 6">Basic 6</option>
         </select>
+        <input type="text" id="directorySearch" oninput="renderPupilDirectory()" placeholder="Search name or guardian..." class="col-span-2 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
       </div>
 
-      <!-- Add Pupil Button -->
-      <button onclick="openAddModal()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-semibold text-xs rounded-lg flex items-center gap-1 transition-all shadow-sm">
-        <span class="text-sm font-bold">+</span> Add Pupil
-      </button>
-    </div>
+      <!-- Directory List -->
+      <div id="pupilDirectoryList" class="space-y-2"></div>
+    </section>
 
-    <!-- Stats Summary Card -->
-    <div class="grid grid-cols-3 gap-2 mb-4 text-center">
-      <div class="bg-emerald-100 dark:bg-emerald-950 p-2 rounded-lg border border-emerald-200 dark:border-emerald-800">
-        <div id="countPresent" class="text-xl font-bold text-emerald-700 dark:text-emerald-300">0</div>
-        <div class="text-xs text-emerald-800 dark:text-emerald-400 font-medium">Present</div>
-      </div>
-      <div class="bg-amber-100 dark:bg-amber-950 p-2 rounded-lg border border-amber-200 dark:border-amber-800">
-        <div id="countLate" class="text-xl font-bold text-amber-700 dark:text-amber-300">0</div>
-        <div class="text-xs text-amber-800 dark:text-amber-400 font-medium">Late</div>
-      </div>
-      <div class="bg-rose-100 dark:bg-rose-950 p-2 rounded-lg border border-rose-200 dark:border-rose-800">
-        <div id="countAbsent" class="text-xl font-bold text-rose-700 dark:text-rose-300">0</div>
-        <div class="text-xs text-rose-800 dark:text-rose-400 font-medium">Absent</div>
-      </div>
-    </div>
 
-    <!-- Student Roster List -->
-    <div id="studentList" class="space-y-2"></div>
+    <!-- VIEW 3: REPORTS & DATABASE EXPORT -->
+    <section id="viewReports" class="hidden space-y-3.5">
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-3 transition-colors">
+        <h2 class="font-bold text-sm flex items-center gap-1.5">
+          📊 Attendance Report Export
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          Export full attendance records for all pupils into Excel/CSV format for official school record-keeping.
+        </p>
+
+        <button onclick="exportAttendanceCSV()" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-2 shadow transition-all">
+          📥 Export Selected Class Attendance (.CSV)
+        </button>
+      </div>
+
+      <!-- Database Backup & Restore Card -->
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-3 transition-colors">
+        <h2 class="font-bold text-sm flex items-center gap-1.5">
+          💾 Offline Database Backup
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          Backup your full school roster and logs to a single file, or restore data to another phone.
+        </p>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="backupDatabaseJSON()" class="py-2 bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs rounded-lg shadow transition-all">
+            📤 Backup Data
+          </button>
+          <label class="py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold text-xs rounded-lg text-center cursor-pointer shadow transition-all">
+            📥 Restore Data
+            <input type="file" accept=".json" onchange="restoreDatabaseJSON(event)" class="hidden">
+          </label>
+        </div>
+      </div>
+    </section>
   </main>
 
+  <!-- Bottom App Navigation Bar -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 z-20 shadow-lg">
+    <div class="max-w-md mx-auto grid grid-cols-3 text-center py-2">
+      <button onclick="switchTab('register')" id="tabBtnRegister" class="text-brand-600 dark:text-brand-400 font-bold text-xs flex flex-col items-center gap-0.5">
+        <span class="text-base">📋</span> Register
+      </button>
+      <button onclick="switchTab('pupils')" id="tabBtnPupils" class="text-slate-400 font-medium text-xs flex flex-col items-center gap-0.5">
+        <span class="text-base">🎒</span> Pupils
+      </button>
+      <button onclick="switchTab('reports')" id="tabBtnReports" class="text-slate-400 font-medium text-xs flex flex-col items-center gap-0.5">
+        <span class="text-base">📈</span> Reports
+      </button>
+    </div>
+  </nav>
+
   <!-- Floating Toast Notification for UNDO Feature -->
-  <div id="undoToast" class="hidden fixed bottom-14 left-1/2 -translate-x-1/2 w-11/12 max-w-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center justify-between z-50 transition-all border border-slate-700 dark:border-slate-300">
+  <div id="undoToast" class="hidden fixed bottom-16 left-1/2 -translate-x-1/2 w-11/12 max-w-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center justify-between z-50 transition-all border border-slate-700 dark:border-slate-300">
     <div class="text-xs font-medium flex items-center gap-1.5 overflow-hidden">
       <span>✏️</span>
-      <span id="toastMessage" class="truncate">Marked Kofi Mensah as Absent</span>
+      <span id="toastMessage" class="truncate">Marked Kofi Mensah as ABSENT</span>
     </div>
     <button onclick="undoLastAction()" class="ml-2 px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-lg uppercase tracking-wider transition-colors shrink-0 shadow">
       Undo
     </button>
   </div>
 
-  <!-- Add Student Modal Dialog -->
+  <!-- Add/Edit Student Modal Dialog -->
   <div id="addStudentModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-sm w-full p-5 border border-slate-200 dark:border-slate-700 transition-colors">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="font-bold text-base text-slate-800 dark:text-slate-100">Add New Pupil</h2>
+        <h2 id="modalTitle" class="font-bold text-base text-slate-800 dark:text-slate-100">Add New Pupil</h2>
         <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold">✕</button>
       </div>
 
-      <form id="addStudentForm" onsubmit="handleAddStudent(event)">
+      <form id="addStudentForm" onsubmit="handleSaveStudent(event)">
+        <input type="hidden" id="editStudentId">
         <div class="space-y-3">
           <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Full Name</label>
+            <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Pupil Full Name</label>
             <input type="text" id="newName" required placeholder="e.g. Kwaku Mensah" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-sm bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
           </div>
 
@@ -149,7 +243,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Parent Phone Number</label>
+            <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Guardian Phone Number</label>
             <input type="tel" id="newPhone" required placeholder="e.g. 0241234567" class="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-2 text-sm bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
           </div>
         </div>
@@ -163,10 +257,10 @@
   </div>
 
   <!-- Footer Developer Branding -->
-  <footer class="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-3 text-center text-xs border-t border-slate-300 dark:border-slate-700 transition-colors">
-    <div class="max-w-md mx-auto flex items-center justify-center gap-1.5">
+  <footer class="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-2.5 text-center text-xs border-t border-slate-300 dark:border-slate-700 transition-colors mb-12">
+    <div class="max-w-md mx-auto flex items-center justify-center gap-1">
       <span>Developed & Maintained by</span>
-      <span class="font-bold text-brand-600 dark:text-brand-500">ADDODANTE HUB</span>
+      <span class="font-extrabold text-brand-600 dark:text-brand-500">ADDODANTE HUB</span>
     </div>
   </footer>
 
@@ -199,12 +293,11 @@
       { id: '106', name: 'Emmanuel Addo', class: 'Basic 1', phone: '0531411275' }
     ];
 
-    // Date & Attendance Storage State
+    // State Variables
     let currentDate = new Date().toISOString().split('T')[0];
     let students = JSON.parse(localStorage.getItem('app_students')) || defaultStudents;
     let attendanceLogs = JSON.parse(localStorage.getItem('app_attendance_logs')) || {};
     
-    // Undo Tracking State
     let lastAction = null;
     let toastTimer = null;
 
@@ -213,12 +306,44 @@
       localStorage.setItem('app_attendance_logs', JSON.stringify(attendanceLogs));
     }
 
-    // Get pupil status for current selected date
+    // View Navigation
+    function switchTab(tabName) {
+      const vRegister = document.getElementById('viewRegister');
+      const vPupils = document.getElementById('viewPupils');
+      const vReports = document.getElementById('viewReports');
+
+      const btnRegister = document.getElementById('tabBtnRegister');
+      const btnPupils = document.getElementById('tabBtnPupils');
+      const btnReports = document.getElementById('tabBtnReports');
+
+      vRegister.classList.add('hidden');
+      vPupils.classList.add('hidden');
+      vReports.classList.add('hidden');
+
+      btnRegister.className = "text-slate-400 font-medium text-xs flex flex-col items-center gap-0.5";
+      btnPupils.className = "text-slate-400 font-medium text-xs flex flex-col items-center gap-0.5";
+      btnReports.className = "text-slate-400 font-medium text-xs flex flex-col items-center gap-0.5";
+
+      if (tabName === 'register') {
+        vRegister.classList.remove('hidden');
+        btnRegister.className = "text-brand-600 dark:text-brand-400 font-bold text-xs flex flex-col items-center gap-0.5";
+        renderRoster();
+      } else if (tabName === 'pupils') {
+        vPupils.classList.remove('hidden');
+        btnPupils.className = "text-brand-600 dark:text-brand-400 font-bold text-xs flex flex-col items-center gap-0.5";
+        renderPupilDirectory();
+      } else if (tabName === 'reports') {
+        vReports.classList.remove('hidden');
+        btnReports.className = "text-brand-600 dark:text-brand-400 font-bold text-xs flex flex-col items-center gap-0.5";
+      }
+    }
+
+    // Get status for selected date
     function getPupilStatus(studentId) {
       if (attendanceLogs[currentDate] && attendanceLogs[currentDate][studentId]) {
         return attendanceLogs[currentDate][studentId];
       }
-      return 'present'; // Default status
+      return 'present'; // Default
     }
 
     // Calendar & Date Handling
@@ -234,9 +359,8 @@
       stripContainer.innerHTML = '';
 
       const curr = new Date(currentDate + 'T00:00:00');
-      const dayOfWeek = curr.getDay(); // 0 is Sun, 1 is Mon...
+      const dayOfWeek = curr.getDay();
       
-      // Calculate Monday of current week
       const monday = new Date(curr);
       const diffToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
       monday.setDate(curr.getDate() + diffToMonday);
@@ -255,7 +379,7 @@
         btn.onclick = () => handleDateChange(isoDate);
         btn.className = `p-1.5 rounded-lg text-center transition-all ${
           isSelected 
-            ? 'bg-brand-600 text-white font-bold shadow-md scale-105' 
+            ? 'bg-brand-600 text-white font-bold shadow scale-105' 
             : 'bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
         }`;
 
@@ -267,7 +391,25 @@
       }
     }
 
-    // Status Update with Undo Support
+    // Bulk Action: Mark All Present
+    function markAllPresent() {
+      const selectedClass = document.getElementById('classSelect').value;
+      const filtered = students.filter(s => s.class === selectedClass);
+
+      if (!attendanceLogs[currentDate]) {
+        attendanceLogs[currentDate] = {};
+      }
+
+      filtered.forEach(s => {
+        attendanceLogs[currentDate][s.id] = 'present';
+      });
+
+      saveState();
+      renderRoster();
+      showUndoToast(`Marked all pupils in ${selectedClass} as PRESENT`);
+    }
+
+    // Status Toggle & Undo Support
     function updateStatus(id, newStatus) {
       if (!attendanceLogs[currentDate]) {
         attendanceLogs[currentDate] = {};
@@ -277,15 +419,11 @@
       if (!pupil) return;
 
       const previousStatus = getPupilStatus(id);
-      
-      // If same status tapped, do nothing
       if (previousStatus === newStatus && attendanceLogs[currentDate][id]) return;
 
-      // Save to logs
       attendanceLogs[currentDate][id] = newStatus;
       saveState();
 
-      // Set Undo Action
       lastAction = {
         studentId: id,
         studentName: pupil.name,
@@ -306,20 +444,17 @@
       if (toastTimer) clearTimeout(toastTimer);
       toastTimer = setTimeout(() => {
         toast.classList.add('hidden');
-      }, 5000); // Toast disappears after 5 seconds
+      }, 5000);
     }
 
     function undoLastAction() {
       if (!lastAction) return;
 
       const { studentId, previousStatus, date } = lastAction;
-      
       if (!attendanceLogs[date]) attendanceLogs[date] = {};
       attendanceLogs[date][studentId] = previousStatus;
       
       saveState();
-
-      // Hide Toast and Clear Undo Action
       document.getElementById('undoToast').classList.add('hidden');
       lastAction = null;
       if (toastTimer) clearTimeout(toastTimer);
@@ -327,10 +462,27 @@
       renderRoster();
     }
 
-    // Modal Controls
-    function openAddModal() {
-      const currentClass = document.getElementById('classSelect').value;
-      document.getElementById('newClass').value = currentClass;
+    // Pupil Directory CRUD Modals
+    function openAddModal(studentId = null) {
+      const title = document.getElementById('modalTitle');
+      const form = document.getElementById('addStudentForm');
+      
+      if (studentId) {
+        const p = students.find(s => s.id === studentId);
+        if (p) {
+          title.innerText = 'Edit Pupil Details';
+          document.getElementById('editStudentId').value = p.id;
+          document.getElementById('newName').value = p.name;
+          document.getElementById('newClass').value = p.class;
+          document.getElementById('newPhone').value = p.phone;
+        }
+      } else {
+        title.innerText = 'Add New Pupil';
+        form.reset();
+        document.getElementById('editStudentId').value = '';
+        document.getElementById('newClass').value = document.getElementById('classSelect').value;
+      }
+      
       document.getElementById('addStudentModal').classList.remove('hidden');
     }
 
@@ -339,27 +491,53 @@
       document.getElementById('addStudentForm').reset();
     }
 
-    function handleAddStudent(event) {
+    function handleSaveStudent(event) {
       event.preventDefault();
+      const editId = document.getElementById('editStudentId').value;
       const name = document.getElementById('newName').value.trim();
       const targetClass = document.getElementById('newClass').value;
       const phone = document.getElementById('newPhone').value.trim();
 
       if (!name || !phone) return;
 
-      const newStudent = {
-        id: 'STU-' + Date.now(),
-        name: name,
-        class: targetClass,
-        phone: phone
-      };
+      if (editId) {
+        // Edit existing
+        const pupil = students.find(s => s.id === editId);
+        if (pupil) {
+          pupil.name = name;
+          pupil.class = targetClass;
+          pupil.phone = phone;
+        }
+      } else {
+        // Add new
+        students.push({
+          id: 'STU-' + Date.now(),
+          name: name,
+          class: targetClass,
+          phone: phone
+        });
+      }
 
-      students.push(newStudent);
       saveState();
-
-      document.getElementById('classSelect').value = targetClass;
       closeAddModal();
-      renderRoster();
+
+      if (!document.getElementById('viewPupils').classList.contains('hidden')) {
+        renderPupilDirectory();
+      } else {
+        document.getElementById('classSelect').value = targetClass;
+        renderRoster();
+      }
+    }
+
+    function deletePupil(studentId) {
+      const p = students.find(s => s.id === studentId);
+      if (!p) return;
+
+      if (confirm(`Are you sure you want to remove ${p.name} from the database?`)) {
+        students = students.filter(s => s.id !== studentId);
+        saveState();
+        renderPupilDirectory();
+      }
     }
 
     function formatGhanaPhone(phone) {
@@ -374,27 +552,32 @@
       window.open(`https://wa.me/${formattedPhone}?text=${text}`, '_blank');
     }
 
+    // Render Tab 1: Attendance Register
     function renderRoster() {
       const selectedClass = document.getElementById('classSelect').value;
+      const searchKeyword = document.getElementById('registerSearch').value.toLowerCase();
       const listContainer = document.getElementById('studentList');
-      const filtered = students.filter(s => s.class === selectedClass);
 
-      let presentCount = 0;
-      let lateCount = 0;
-      let absentCount = 0;
+      let filtered = students.filter(s => s.class === selectedClass);
+      if (searchKeyword) {
+        filtered = filtered.filter(s => s.name.toLowerCase().includes(searchKeyword));
+      }
+
+      let presentCount = 0, lateCount = 0, absentCount = 0;
 
       listContainer.innerHTML = '';
 
       if (filtered.length === 0) {
         listContainer.innerHTML = `
           <div class="text-center py-8 text-slate-400 dark:text-slate-500 text-xs">
-            No pupils added to ${selectedClass} yet.<br>
-            Tap <strong class="text-brand-600 dark:text-brand-400">+ Add Pupil</strong> to start.
+            No pupils found for ${selectedClass}.<br>
+            Tap <strong class="text-brand-600 dark:text-brand-400 cursor-pointer" onclick="openAddModal()">+ Add Pupil</strong> to populate roster.
           </div>
         `;
         document.getElementById('countPresent').innerText = 0;
         document.getElementById('countLate').innerText = 0;
         document.getElementById('countAbsent').innerText = 0;
+        document.getElementById('countRate').innerText = '0%';
         return;
       }
 
@@ -406,20 +589,20 @@
         else if (status === 'absent') absentCount++;
 
         const card = document.createElement('div');
-        card.className = 'bg-white dark:bg-slate-800 p-3 rounded-lg shadow-sm flex items-center justify-between border border-slate-200 dark:border-slate-700 transition-colors';
+        card.className = 'bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm flex items-center justify-between border border-slate-200 dark:border-slate-700 transition-colors';
         
         card.innerHTML = `
           <div>
             <div class="font-bold text-sm text-slate-800 dark:text-slate-100">${s.name}</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">${s.phone}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">${s.phone}</div>
           </div>
           <div class="flex items-center gap-1">
-            <button onclick="updateStatus('${s.id}', 'present')" class="px-2.5 py-1 text-xs rounded-md font-bold transition-all ${status === 'present' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">P</button>
-            <button onclick="updateStatus('${s.id}', 'late')" class="px-2.5 py-1 text-xs rounded-md font-bold transition-all ${status === 'late' ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">L</button>
-            <button onclick="updateStatus('${s.id}', 'absent')" class="px-2.5 py-1 text-xs rounded-md font-bold transition-all ${status === 'absent' ? 'bg-rose-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">A</button>
+            <button onclick="updateStatus('${s.id}', 'present')" class="px-2.5 py-1 text-xs rounded-lg font-bold transition-all ${status === 'present' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">P</button>
+            <button onclick="updateStatus('${s.id}', 'late')" class="px-2.5 py-1 text-xs rounded-lg font-bold transition-all ${status === 'late' ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">L</button>
+            <button onclick="updateStatus('${s.id}', 'absent')" class="px-2.5 py-1 text-xs rounded-lg font-bold transition-all ${status === 'absent' ? 'bg-rose-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200'}">A</button>
             
             ${status === 'absent' ? `
-              <button onclick="sendWhatsApp('${s.name}', '${s.phone}')" class="ml-1 p-1.5 bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 rounded-md hover:bg-brand-200 dark:hover:bg-brand-800 transition-colors">
+              <button onclick="sendWhatsApp('${s.name}', '${s.phone}')" class="ml-1 p-1.5 bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 rounded-lg hover:bg-brand-200 dark:hover:bg-brand-800 transition-colors" title="Send WhatsApp Notice">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
               </button>
             ` : ''}
@@ -428,10 +611,123 @@
         listContainer.appendChild(card);
       });
 
-      // Update Counts
+      const totalCount = filtered.length;
+      const rate = totalCount > 0 ? Math.round(((presentCount + lateCount) / totalCount) * 100) : 0;
+
       document.getElementById('countPresent').innerText = presentCount;
       document.getElementById('countLate').innerText = lateCount;
       document.getElementById('countAbsent').innerText = absentCount;
+      document.getElementById('countRate').innerText = `${rate}%`;
+    }
+
+    // Render Tab 2: Pupils Directory
+    function renderPupilDirectory() {
+      const classFilter = document.getElementById('directoryClassFilter').value;
+      const searchKw = document.getElementById('directorySearch').value.toLowerCase();
+      const container = document.getElementById('pupilDirectoryList');
+
+      let list = [...students];
+      if (classFilter !== 'ALL') {
+        list = list.filter(s => s.class === classFilter);
+      }
+      if (searchKw) {
+        list = list.filter(s => s.name.toLowerCase().includes(searchKw) || s.phone.includes(searchKw));
+      }
+
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">No pupils matching criteria.</div>`;
+        return;
+      }
+
+      list.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm flex items-center justify-between border border-slate-200 dark:border-slate-700';
+        card.innerHTML = `
+          <div>
+            <div class="font-bold text-sm flex items-center gap-2">
+              ${s.name}
+              <span class="text-[10px] px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded font-semibold">${s.class}</span>
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">Phone: ${s.phone}</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="openAddModal('${s.id}')" class="p-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-brand-600 font-bold bg-slate-100 dark:bg-slate-700 rounded-lg">✏️ Edit</button>
+            <button onclick="deletePupil('${s.id}')" class="p-1.5 text-xs text-rose-600 font-bold bg-rose-50 dark:bg-rose-950/50 rounded-lg">🗑️</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Export CSV Report
+    function exportAttendanceCSV() {
+      const selectedClass = document.getElementById('classSelect').value;
+      const filtered = students.filter(s => s.class === selectedClass);
+
+      if (filtered.length === 0) {
+        alert(`No pupils registered under ${selectedClass}`);
+        return;
+      }
+
+      let csvContent = "data:text/csv;charset=utf-8,Date,Class,Student_ID,Full_Name,Guardian_Phone,Status\n";
+
+      Object.keys(attendanceLogs).forEach(dateStr => {
+        filtered.forEach(s => {
+          const status = attendanceLogs[dateStr][s.id] || 'unmarked';
+          csvContent += `${dateStr},"${s.class}","${s.id}","${s.name}","${s.phone}",${status}\n`;
+        });
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `${selectedClass.replace(/\s+/g, '_')}_Attendance_Report.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // JSON Backup & Restore
+    function backupDatabaseJSON() {
+      const payload = {
+        students: students,
+        attendanceLogs: attendanceLogs,
+        exportedAt: new Date().toISOString()
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `Addodante_School_Backup_${currentDate}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function restoreDatabaseJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.students && parsed.attendanceLogs) {
+            students = parsed.students;
+            attendanceLogs = parsed.attendanceLogs;
+            saveState();
+            alert('Database restored successfully!');
+            renderRoster();
+          } else {
+            alert('Invalid backup file structure.');
+          }
+        } catch (err) {
+          alert('Failed to parse backup file.');
+        }
+      };
+      reader.readAsText(file);
     }
 
     // Initialize Page
