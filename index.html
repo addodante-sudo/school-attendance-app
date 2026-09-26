@@ -120,6 +120,26 @@
       </div>
     </div>
 
+    <!-- LIVE ATTENDANCE SUMMARY BAR -->
+    <div class="grid grid-cols-4 gap-2 text-center">
+      <div class="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 p-2 rounded-xl border border-emerald-200 dark:border-emerald-800/60 shadow-sm">
+        <span class="block text-[9px] uppercase font-bold tracking-wider text-emerald-600 dark:text-emerald-400">Present</span>
+        <span id="summaryPresent" class="text-base font-extrabold leading-tight">0</span>
+      </div>
+      <div class="bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 p-2 rounded-xl border border-amber-200 dark:border-amber-800/60 shadow-sm">
+        <span class="block text-[9px] uppercase font-bold tracking-wider text-amber-600 dark:text-amber-400">Late</span>
+        <span id="summaryLate" class="text-base font-extrabold leading-tight">0</span>
+      </div>
+      <div class="bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 p-2 rounded-xl border border-rose-200 dark:border-rose-800/60 shadow-sm">
+        <span class="block text-[9px] uppercase font-bold tracking-wider text-rose-600 dark:text-rose-400">Absent</span>
+        <span id="summaryAbsent" class="text-base font-extrabold leading-tight">0</span>
+      </div>
+      <div class="bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-300 p-2 rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm">
+        <span class="block text-[9px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">Unmarked</span>
+        <span id="summaryUnmarked" class="text-base font-extrabold leading-tight">0</span>
+      </div>
+    </div>
+
     <!-- Instant Search Input Bar -->
     <div class="relative">
       <input 
@@ -178,9 +198,8 @@
 
   <!-- ================= 6. JAVASCRIPT LOGIC ================= -->
   <script>
-    // Replace with your actual credentials from Supabase Dashboard > Settings > API
-    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const SUPABASE_URL = 'https://lzszyolecmxxbdtrteik.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6c3p5b2xlY214eGJkdHJ0ZWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mjk1NzcsImV4cCI6MjEwNjAwNTU3N30.rK5UBp0Vu5Of6pFqcxVhIZMfd0e2ZXZ3ha-8oVW4bHE';
     
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -266,30 +285,82 @@
       document.getElementById('loginModal').classList.remove('hidden');
     }
 
-    // --- PUPIL DATA & SEARCH LOGIC ---
+    // --- LIVE SUMMARY STATS CALCULATOR ---
+    function updateSummaryStats() {
+      let present = 0, late = 0, absent = 0, unmarked = 0;
+
+      loadedPupils.forEach(pupil => {
+        if (pupil.status === 'Present') present++;
+        else if (pupil.status === 'Late') late++;
+        else if (pupil.status === 'Absent') absent++;
+        else unmarked++;
+      });
+
+      document.getElementById('summaryPresent').innerText = present;
+      document.getElementById('summaryLate').innerText = late;
+      document.getElementById('summaryAbsent').innerText = absent;
+      document.getElementById('summaryUnmarked').innerText = unmarked;
+    }
+
+    // --- PUPIL & ATTENDANCE DATA LOGIC ---
     async function loadPupils() {
       const selectedClass = document.getElementById('classSelect').value;
+      const selectedDate = document.getElementById('datePicker').value;
       const studentList = document.getElementById('studentList');
       
       document.getElementById('searchInput').value = '';
-      studentList.innerHTML = '<p class="text-xs text-center text-slate-400 py-4">Loading pupils...</p>';
+      studentList.innerHTML = '<p class="text-xs text-center text-slate-400 py-4">Loading pupils & attendance...</p>';
 
-      const { data: pupils, error } = await supabaseClient
+      // 1. Fetch pupils for the selected class
+      const { data: pupils, error: pupilErr } = await supabaseClient
         .from('pupils')
         .select('*')
         .eq('class', selectedClass);
 
-      if (error) {
+      if (pupilErr) {
         studentList.innerHTML = '<p class="text-xs text-center text-rose-500 py-4">Failed to load pupils.</p>';
+        updateSummaryStats();
         return;
       }
 
-      loadedPupils = pupils || [];
+      if (!pupils || pupils.length === 0) {
+        loadedPupils = [];
+        renderPupils([]);
+        return;
+      }
+
+      // 2. Fetch existing attendance records for these pupils on the selected date
+      const pupilIds = pupils.map(p => p.id);
+      let attendanceMap = {};
+
+      if (pupilIds.length > 0 && selectedDate) {
+        const { data: attData, error: attErr } = await supabaseClient
+          .from('attendance')
+          .select('pupil_id, status')
+          .eq('date', selectedDate)
+          .in('pupil_id', pupilIds);
+
+        if (!attErr && attData) {
+          attData.forEach(item => {
+            attendanceMap[item.pupil_id] = item.status;
+          });
+        }
+      }
+
+      // 3. Merge pupils with attendance status
+      loadedPupils = pupils.map(pupil => ({
+        ...pupil,
+        status: attendanceMap[pupil.id] || null
+      }));
+
       renderPupils(loadedPupils);
     }
 
     function renderPupils(pupilsToDisplay) {
       const studentList = document.getElementById('studentList');
+
+      // Refresh top summary statistics
+      updateSummaryStats();
 
       if (pupilsToDisplay.length === 0) {
         studentList.innerHTML = '<p class="text-xs text-center text-slate-400 py-4">No pupils found.</p>';
@@ -298,13 +369,35 @@
 
       studentList.innerHTML = '';
       pupilsToDisplay.forEach(pupil => {
+        const isP = pupil.status === 'Present';
+        const isL = pupil.status === 'Late';
+        const isA = pupil.status === 'Absent';
+
+        // Button styles depending on whether pupil has an existing mark for this date
+        const pBtnStyle = isP 
+          ? 'bg-emerald-600 text-white ring-2 ring-emerald-400 font-extrabold shadow scale-105' 
+          : (pupil.status ? 'bg-slate-200 dark:bg-slate-700/60 text-slate-400 dark:text-slate-500 opacity-60' : 'bg-emerald-500 hover:bg-emerald-600 text-white font-bold opacity-90');
+
+        const lBtnStyle = isL 
+          ? 'bg-amber-500 text-white ring-2 ring-amber-300 font-extrabold shadow scale-105' 
+          : (pupil.status ? 'bg-slate-200 dark:bg-slate-700/60 text-slate-400 dark:text-slate-500 opacity-60' : 'bg-amber-500 hover:bg-amber-600 text-white font-bold opacity-90');
+
+        const aBtnStyle = isA 
+          ? 'bg-rose-600 text-white ring-2 ring-rose-400 font-extrabold shadow scale-105' 
+          : (pupil.status ? 'bg-slate-200 dark:bg-slate-700/60 text-slate-400 dark:text-slate-500 opacity-60' : 'bg-rose-500 hover:bg-rose-600 text-white font-bold opacity-90');
+
         studentList.innerHTML += `
-          <div class="flex justify-between items-center p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-            <span class="font-bold text-xs">${pupil.name}</span>
+          <div class="flex justify-between items-center p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-all">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-xs">${pupil.name}</span>
+              ${pupil.status ? `
+                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${                   isP ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' :                   isL ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' :                   'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'                 }">${pupil.status}</span>
+              ` : ''}
+            </div>
             <div class="flex gap-1">
-              <button onclick="markAttendance(${pupil.id}, 'Present')" class="px-2.5 py-1 bg-emerald-500 text-white rounded-lg text-xs font-bold active:scale-95 shadow-sm">P</button>
-              <button onclick="markAttendance(${pupil.id}, 'Late')" class="px-2.5 py-1 bg-amber-500 text-white rounded-lg text-xs font-bold active:scale-95 shadow-sm">L</button>
-              <button onclick="markAttendance(${pupil.id}, 'Absent')" class="px-2.5 py-1 bg-rose-500 text-white rounded-lg text-xs font-bold active:scale-95 shadow-sm">A</button>
+              <button onclick="markAttendance(${pupil.id}, 'Present')" class="px-2.5 py-1 text-xs rounded-lg active:scale-95 transition-all ${pBtnStyle}">P</button>
+              <button onclick="markAttendance(${pupil.id}, 'Late')" class="px-2.5 py-1 text-xs rounded-lg active:scale-95 transition-all ${lBtnStyle}">L</button>
+              <button onclick="markAttendance(${pupil.id}, 'Absent')" class="px-2.5 py-1 text-xs rounded-lg active:scale-95 transition-all ${aBtnStyle}">A</button>
             </div>
           </div>
         `;
@@ -322,14 +415,20 @@
     async function markAttendance(pupilId, status) {
       const today = document.getElementById('datePicker').value;
 
+      // Optimistically update local array so UI responds instantly
+      const targetPupil = loadedPupils.find(p => p.id === pupilId);
+      if (targetPupil) {
+        targetPupil.status = status;
+        filterPupils();
+      }
+
       const { error } = await supabaseClient
         .from('attendance')
         .upsert([{ pupil_id: pupilId, date: today, status: status }], { onConflict: 'pupil_id, date' });
 
       if (error) {
         alert("Failed to save mark: " + error.message);
-      } else {
-        alert(`Marked ${status}!`);
+        loadPupils(); // Revert state on error
       }
     }
 
