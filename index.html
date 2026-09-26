@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Addodante School Registry</title>
+  <title>Addodante School Registry | Cloud Sync</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS Client library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -27,14 +29,13 @@
     }
   </script>
   <style>
-    /* Hide scrollbar for clean horizontal week strip */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200">
 
-  <!-- Main Sticky Header -->
+  <!-- Header -->
   <header class="bg-brand-600 dark:bg-brand-900 text-white p-3.5 shadow-md sticky top-0 z-20 transition-colors duration-200">
     <div class="max-w-md mx-auto flex justify-between items-center">
       <div class="flex items-center gap-2.5">
@@ -42,7 +43,10 @@
         <div id="logoFallback" class="hidden h-9 w-9 bg-white text-brand-600 font-black text-lg flex items-center justify-center rounded-lg shadow-sm">A</div>
         <div>
           <h1 class="font-extrabold text-base leading-tight tracking-tight">School Registry</h1>
-          <p class="text-[11px] text-brand-100">by <span class="font-bold text-white">ADDODANTE HUB</span></p>
+          <p class="text-[11px] text-brand-100 flex items-center gap-1">
+            <span>by <strong class="text-white">ADDODANTE HUB</strong></span>
+            <span id="syncBadge" class="ml-1 px-1.5 py-0.2 bg-amber-400 text-slate-900 font-bold rounded-full text-[9px]">Local</span>
+          </p>
         </div>
       </div>
       
@@ -91,7 +95,7 @@
           </button>
         </div>
 
-        <!-- Roster Search Bar -->
+        <!-- Search Bar -->
         <input type="text" id="registerSearch" oninput="renderRoster()" placeholder="Search pupil name..." class="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
       </div>
 
@@ -118,7 +122,6 @@
       <!-- Student Register List -->
       <div id="studentList" class="space-y-2"></div>
     </section>
-
 
     <!-- VIEW 2: PUPILS DIRECTORY -->
     <section id="viewPupils" class="hidden space-y-3.5">
@@ -150,40 +153,36 @@
       <div id="pupilDirectoryList" class="space-y-2"></div>
     </section>
 
-
-    <!-- VIEW 3: REPORTS & DATABASE EXPORT -->
+    <!-- VIEW 3: REPORTS & SETTINGS -->
     <section id="viewReports" class="hidden space-y-3.5">
+      <!-- Supabase Cloud Credentials Form -->
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-3 transition-colors">
+        <h2 class="font-bold text-sm flex items-center gap-1.5 text-brand-600 dark:text-brand-400">
+          ☁️ Supabase Cloud Database Config
+        </h2>
+        <div class="space-y-2">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">Project URL</label>
+            <input type="text" id="cfgUrl" placeholder="https://your-project.supabase.co" class="w-full border border-slate-300 dark:border-slate-600 rounded p-1.5 text-xs bg-slate-50 dark:bg-slate-700">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">Anon Public Key</label>
+            <input type="password" id="cfgKey" placeholder="eyJhbGciOi..." class="w-full border border-slate-300 dark:border-slate-600 rounded p-1.5 text-xs bg-slate-50 dark:bg-slate-700">
+          </div>
+          <button onclick="saveSupabaseSettings()" class="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-lg shadow">
+            Save & Sync Cloud Database
+          </button>
+        </div>
+      </div>
+
+      <!-- CSV Export -->
       <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-3 transition-colors">
         <h2 class="font-bold text-sm flex items-center gap-1.5">
           📊 Attendance Report Export
         </h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-          Export full attendance records for all pupils into Excel/CSV format for official school record-keeping.
-        </p>
-
-        <button onclick="exportAttendanceCSV()" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-2 shadow transition-all">
-          📥 Export Selected Class Attendance (.CSV)
+        <button onclick="exportAttendanceCSV()" class="w-full py-2.5 bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-2 shadow">
+          📥 Export Class Attendance (.CSV)
         </button>
-      </div>
-
-      <!-- Database Backup & Restore Card -->
-      <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-3 transition-colors">
-        <h2 class="font-bold text-sm flex items-center gap-1.5">
-          💾 Offline Database Backup
-        </h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-          Backup your full school roster and logs to a single file, or restore data to another phone.
-        </p>
-
-        <div class="grid grid-cols-2 gap-2">
-          <button onclick="backupDatabaseJSON()" class="py-2 bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs rounded-lg shadow transition-all">
-            📤 Backup Data
-          </button>
-          <label class="py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold text-xs rounded-lg text-center cursor-pointer shadow transition-all">
-            📥 Restore Data
-            <input type="file" accept=".json" onchange="restoreDatabaseJSON(event)" class="hidden">
-          </label>
-        </div>
       </div>
     </section>
   </main>
@@ -198,12 +197,12 @@
         <span class="text-base">🎒</span> Pupils
       </button>
       <button onclick="switchTab('reports')" id="tabBtnReports" class="text-slate-400 font-medium text-xs flex flex-col items-center gap-0.5">
-        <span class="text-base">📈</span> Reports
+        <span class="text-base">📈</span> Reports & Cloud
       </button>
     </div>
   </nav>
 
-  <!-- Floating Toast Notification for UNDO Feature -->
+  <!-- Floating Undo Toast -->
   <div id="undoToast" class="hidden fixed bottom-16 left-1/2 -translate-x-1/2 w-11/12 max-w-md bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center justify-between z-50 transition-all border border-slate-700 dark:border-slate-300">
     <div class="text-xs font-medium flex items-center gap-1.5 overflow-hidden">
       <span>✏️</span>
@@ -214,7 +213,7 @@
     </button>
   </div>
 
-  <!-- Add/Edit Student Modal Dialog -->
+  <!-- Add/Edit Student Modal -->
   <div id="addStudentModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-sm w-full p-5 border border-slate-200 dark:border-slate-700 transition-colors">
       <div class="flex justify-between items-center mb-4">
@@ -265,6 +264,116 @@
   </footer>
 
   <script>
+    // --- SUPABASE CONFIGURATION (PRE-CONFIGURED) ---
+    let SUPABASE_URL = localStorage.getItem('cfg_sp_url') || 'https://lzszyolecmxxbdtrteik.supabase.co';
+    let SUPABASE_ANON_KEY = localStorage.getItem('cfg_sp_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6c3p5b2xlY214eGJkdHJ0ZWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mjk1NzcsImV4cCI6MjEwNjAwNTU3N30.rK5UBp0Vu5Of6pFqcxVhIZMfd0e2ZXZ3ha-8oVW4bHE';
+    let supabaseClient = null;
+
+    function initSupabase() {
+      if (SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20) {
+        try {
+          supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          const badge = document.getElementById('syncBadge');
+          badge.innerText = '⚡ Cloud Synced';
+          badge.className = 'ml-1 px-1.5 py-0.2 bg-emerald-400 text-slate-900 font-bold rounded-full text-[9px]';
+          
+          // Setup Realtime Listener
+          supabaseClient
+            .channel('public:attendance_logs')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, payload => {
+              if (payload.new && payload.new.date === currentDate) {
+                if (!attendanceLogs[currentDate]) attendanceLogs[currentDate] = {};
+                attendanceLogs[currentDate][payload.new.student_id] = payload.new.status;
+                saveLocalState();
+                renderRoster();
+              }
+            })
+            .subscribe();
+
+          // Initial Cloud Sync Fetch
+          syncFromCloud();
+        } catch (e) {
+          console.log('Supabase init failed', e);
+        }
+      }
+    }
+
+    function saveSupabaseSettings() {
+      const u = document.getElementById('cfgUrl').value.trim();
+      const k = document.getElementById('cfgKey').value.trim();
+      if (u && k) {
+        localStorage.setItem('cfg_sp_url', u);
+        localStorage.setItem('cfg_sp_key', k);
+        SUPABASE_URL = u;
+        SUPABASE_ANON_KEY = k;
+        initSupabase();
+        alert('Supabase credentials saved and connected!');
+      }
+    }
+
+    // Default Roster Fallback
+    const defaultStudents = [
+      { id: 'STU-101', name: 'Kofi Mensah', class: 'Basic 3', phone: '0241234567' },
+      { id: 'STU-102', name: 'Ama Serwaa', class: 'Basic 3', phone: '0271234567' },
+      { id: 'STU-103', name: 'Kwaku Dua', class: 'Basic 3', phone: '0551234567' },
+      { id: 'STU-104', name: 'Abena Osei', class: 'Basic 3', phone: '0201234567' },
+      { id: 'STU-105', name: 'Yaw Owusu', class: 'Basic 3', phone: '0501234567' },
+      { id: 'STU-106', name: 'Emmanuel Addo', class: 'Basic 1', phone: '0531411275' }
+    ];
+
+    let currentDate = new Date().toISOString().split('T')[0];
+    let students = JSON.parse(localStorage.getItem('app_students')) || defaultStudents;
+    let attendanceLogs = JSON.parse(localStorage.getItem('app_attendance_logs')) || {};
+    let lastAction = null;
+    let toastTimer = null;
+
+    function saveLocalState() {
+      localStorage.setItem('app_students', JSON.stringify(students));
+      localStorage.setItem('app_attendance_logs', JSON.stringify(attendanceLogs));
+    }
+
+    // Cloud Data Sync
+    async function syncFromCloud() {
+      if (!supabaseClient) return;
+      try {
+        // Fetch Students
+        const { data: stData } = await supabaseClient.from('students').select('*');
+        if (stData && stData.length > 0) {
+          students = stData;
+        }
+
+        // Fetch Logs for Active Date
+        const { data: lgData } = await supabaseClient.from('attendance_logs').select('*').eq('date', currentDate);
+        if (lgData) {
+          if (!attendanceLogs[currentDate]) attendanceLogs[currentDate] = {};
+          lgData.forEach(row => {
+            attendanceLogs[currentDate][row.student_id] = row.status;
+          });
+        }
+        saveLocalState();
+        renderRoster();
+      } catch (err) {
+        console.log('Cloud sync error', err);
+      }
+    }
+
+    // Upsert Log to Cloud
+    async function syncLogToCloud(studentId, status) {
+      if (!supabaseClient) return;
+      try {
+        const logId = `${currentDate}_${studentId}`;
+        await supabaseClient.from('attendance_logs').upsert({
+          id: logId,
+          date: currentDate,
+          student_id: studentId,
+          status: status,
+          updated_at: new Date().toISOString()
+        });
+      } catch (err) {
+        console.log('Error syncing log to cloud', err);
+      }
+    }
+
     // Theme setup
     if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
@@ -281,29 +390,6 @@
       const isDark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
       updateThemeIcon();
-    }
-
-    // Default Seed Roster
-    const defaultStudents = [
-      { id: '101', name: 'Kofi Mensah', class: 'Basic 3', phone: '0241234567' },
-      { id: '102', name: 'Ama Serwaa', class: 'Basic 3', phone: '0271234567' },
-      { id: '103', name: 'Kwaku Dua', class: 'Basic 3', phone: '0551234567' },
-      { id: '104', name: 'Abena Osei', class: 'Basic 3', phone: '0201234567' },
-      { id: '105', name: 'Yaw Owusu', class: 'Basic 3', phone: '0501234567' },
-      { id: '106', name: 'Emmanuel Addo', class: 'Basic 1', phone: '0531411275' }
-    ];
-
-    // State Variables
-    let currentDate = new Date().toISOString().split('T')[0];
-    let students = JSON.parse(localStorage.getItem('app_students')) || defaultStudents;
-    let attendanceLogs = JSON.parse(localStorage.getItem('app_attendance_logs')) || {};
-    
-    let lastAction = null;
-    let toastTimer = null;
-
-    function saveState() {
-      localStorage.setItem('app_students', JSON.stringify(students));
-      localStorage.setItem('app_attendance_logs', JSON.stringify(attendanceLogs));
     }
 
     // View Navigation
@@ -335,22 +421,23 @@
       } else if (tabName === 'reports') {
         vReports.classList.remove('hidden');
         btnReports.className = "text-brand-600 dark:text-brand-400 font-bold text-xs flex flex-col items-center gap-0.5";
+        document.getElementById('cfgUrl').value = SUPABASE_URL;
+        document.getElementById('cfgKey').value = SUPABASE_ANON_KEY;
       }
     }
 
-    // Get status for selected date
     function getPupilStatus(studentId) {
       if (attendanceLogs[currentDate] && attendanceLogs[currentDate][studentId]) {
         return attendanceLogs[currentDate][studentId];
       }
-      return 'present'; // Default
+      return 'present';
     }
 
-    // Calendar & Date Handling
     function handleDateChange(newDateStr) {
       currentDate = newDateStr;
       document.getElementById('datePicker').value = currentDate;
       renderWeekStrip();
+      syncFromCloud();
       renderRoster();
     }
 
@@ -391,7 +478,6 @@
       }
     }
 
-    // Bulk Action: Mark All Present
     function markAllPresent() {
       const selectedClass = document.getElementById('classSelect').value;
       const filtered = students.filter(s => s.class === selectedClass);
@@ -402,14 +488,14 @@
 
       filtered.forEach(s => {
         attendanceLogs[currentDate][s.id] = 'present';
+        syncLogToCloud(s.id, 'present');
       });
 
-      saveState();
+      saveLocalState();
       renderRoster();
       showUndoToast(`Marked all pupils in ${selectedClass} as PRESENT`);
     }
 
-    // Status Toggle & Undo Support
     function updateStatus(id, newStatus) {
       if (!attendanceLogs[currentDate]) {
         attendanceLogs[currentDate] = {};
@@ -422,7 +508,8 @@
       if (previousStatus === newStatus && attendanceLogs[currentDate][id]) return;
 
       attendanceLogs[currentDate][id] = newStatus;
-      saveState();
+      saveLocalState();
+      syncLogToCloud(id, newStatus);
 
       lastAction = {
         studentId: id,
@@ -454,7 +541,9 @@
       if (!attendanceLogs[date]) attendanceLogs[date] = {};
       attendanceLogs[date][studentId] = previousStatus;
       
-      saveState();
+      saveLocalState();
+      syncLogToCloud(studentId, previousStatus);
+
       document.getElementById('undoToast').classList.add('hidden');
       lastAction = null;
       if (toastTimer) clearTimeout(toastTimer);
@@ -462,7 +551,6 @@
       renderRoster();
     }
 
-    // Pupil Directory CRUD Modals
     function openAddModal(studentId = null) {
       const title = document.getElementById('modalTitle');
       const form = document.getElementById('addStudentForm');
@@ -491,7 +579,7 @@
       document.getElementById('addStudentForm').reset();
     }
 
-    function handleSaveStudent(event) {
+    async function handleSaveStudent(event) {
       event.preventDefault();
       const editId = document.getElementById('editStudentId').value;
       const name = document.getElementById('newName').value.trim();
@@ -500,25 +588,26 @@
 
       if (!name || !phone) return;
 
+      let studentObj = {
+        id: editId || 'STU-' + Date.now(),
+        name: name,
+        class: targetClass,
+        phone: phone
+      };
+
       if (editId) {
-        // Edit existing
-        const pupil = students.find(s => s.id === editId);
-        if (pupil) {
-          pupil.name = name;
-          pupil.class = targetClass;
-          pupil.phone = phone;
-        }
+        const idx = students.findIndex(s => s.id === editId);
+        if (idx !== -1) students[idx] = studentObj;
       } else {
-        // Add new
-        students.push({
-          id: 'STU-' + Date.now(),
-          name: name,
-          class: targetClass,
-          phone: phone
-        });
+        students.push(studentObj);
       }
 
-      saveState();
+      saveLocalState();
+
+      if (supabaseClient) {
+        await supabaseClient.from('students').upsert(studentObj);
+      }
+
       closeAddModal();
 
       if (!document.getElementById('viewPupils').classList.contains('hidden')) {
@@ -529,13 +618,18 @@
       }
     }
 
-    function deletePupil(studentId) {
+    async function deletePupil(studentId) {
       const p = students.find(s => s.id === studentId);
       if (!p) return;
 
       if (confirm(`Are you sure you want to remove ${p.name} from the database?`)) {
         students = students.filter(s => s.id !== studentId);
-        saveState();
+        saveLocalState();
+
+        if (supabaseClient) {
+          await supabaseClient.from('students').delete().eq('id', studentId);
+        }
+
         renderPupilDirectory();
       }
     }
@@ -552,7 +646,6 @@
       window.open(`https://wa.me/${formattedPhone}?text=${text}`, '_blank');
     }
 
-    // Render Tab 1: Attendance Register
     function renderRoster() {
       const selectedClass = document.getElementById('classSelect').value;
       const searchKeyword = document.getElementById('registerSearch').value.toLowerCase();
@@ -620,7 +713,6 @@
       document.getElementById('countRate').innerText = `${rate}%`;
     }
 
-    // Render Tab 2: Pupils Directory
     function renderPupilDirectory() {
       const classFilter = document.getElementById('directoryClassFilter').value;
       const searchKw = document.getElementById('directorySearch').value.toLowerCase();
@@ -661,7 +753,6 @@
       });
     }
 
-    // Export CSV Report
     function exportAttendanceCSV() {
       const selectedClass = document.getElementById('classSelect').value;
       const filtered = students.filter(s => s.class === selectedClass);
@@ -689,51 +780,11 @@
       document.body.removeChild(link);
     }
 
-    // JSON Backup & Restore
-    function backupDatabaseJSON() {
-      const payload = {
-        students: students,
-        attendanceLogs: attendanceLogs,
-        exportedAt: new Date().toISOString()
-      };
-
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `Addodante_School_Backup_${currentDate}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    }
-
-    function restoreDatabaseJSON(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const parsed = JSON.parse(e.target.result);
-          if (parsed.students && parsed.attendanceLogs) {
-            students = parsed.students;
-            attendanceLogs = parsed.attendanceLogs;
-            saveState();
-            alert('Database restored successfully!');
-            renderRoster();
-          } else {
-            alert('Invalid backup file structure.');
-          }
-        } catch (err) {
-          alert('Failed to parse backup file.');
-        }
-      };
-      reader.readAsText(file);
-    }
-
     // Initialize Page
     updateThemeIcon();
     document.getElementById('datePicker').value = currentDate;
     renderWeekStrip();
+    initSupabase();
     renderRoster();
   </script>
 </body>
