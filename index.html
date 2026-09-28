@@ -77,21 +77,25 @@
         const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // --- AUTHORIZED STAFF PINS ---
+        // Edit or add new 4-digit PINs inside this array:
+        const ALLOWED_PINS = ["2026", "5566", "7788"];
+
         // System state
         let currentPin = "";
         let pupilsData = [];
         let attendanceState = {}; // { pupil_id: 'Present' | 'Absent' | 'Late' }
 
-        // Set Date
+        // Set Date Display
         document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('en-GB', {
             weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
         });
 
         // 1. PIN Authentication
         function authenticateTeacher() {
-            const pinInput = document.getElementById('teacher-pin').value;
-            // Configurable staff PINs (Default: 1234)
-            if (pinInput === "1234" || pinInput === "0000") {
+            const pinInput = document.getElementById('teacher-pin').value.trim();
+            
+            if (ALLOWED_PINS.includes(pinInput)) {
                 currentPin = pinInput;
                 document.getElementById('auth-modal').classList.add('hidden');
                 document.getElementById('teacher-pin').value = '';
