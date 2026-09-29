@@ -3,24 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Registry</title>
+    <title>Complete Attendance Registry</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-12">
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-16">
 
-    <!-- Header Navigation -->
-    <header class="bg-indigo-700 text-white p-4 shadow-md sticky top-0 z-10">
-        <div class="max-w-3xl mx-auto flex justify-between items-center">
+    <!-- Top Navigation Header -->
+    <header class="bg-indigo-700 text-white p-4 shadow-md sticky top-0 z-20">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
             <div>
                 <h1 class="text-xl font-bold tracking-wide">Attendance Registry</h1>
                 <p class="text-xs text-indigo-200" id="current-date-display"></p>
             </div>
-            <button onclick="logoutTeacher()" class="bg-indigo-800 hover:bg-indigo-900 text-xs px-3 py-1.5 rounded-lg border border-indigo-500">
-                Lock App
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="openAddPupilModal()" class="bg-indigo-600 hover:bg-indigo-800 text-white text-xs px-3 py-1.5 rounded-lg border border-indigo-400 font-semibold transition">
+                    + Add Pupil
+                </button>
+                <button onclick="logoutTeacher()" class="bg-indigo-900 hover:bg-slate-900 text-xs px-3 py-1.5 rounded-lg border border-indigo-500 transition">
+                    Lock
+                </button>
+            </div>
         </div>
     </header>
 
@@ -29,7 +34,7 @@
         <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm text-center">
             <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 font-bold text-xl">🔒</div>
             <h2 class="text-lg font-bold text-slate-900">Teacher PIN Verification</h2>
-            <p class="text-xs text-slate-500 mb-4">Enter your 4-digit staff PIN to access attendance logs.</p>
+            <p class="text-xs text-slate-500 mb-4">Enter staff PIN to unlock attendance features.</p>
             
             <input type="password" id="teacher-pin" maxlength="4" placeholder="••••" autofocus
                 onkeyup="if(event.key==='Enter') authenticateTeacher()"
@@ -42,70 +47,138 @@
         </div>
     </div>
 
-    <!-- Main Content Container -->
-    <main class="max-w-3xl mx-auto p-4 space-y-4">
+    <!-- Main Content Area -->
+    <main class="max-w-4xl mx-auto p-4 space-y-4">
         
-        <!-- Controls & Bulk Actions Bar -->
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
-            <div class="w-full sm:w-auto">
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Select Class</label>
-                <select id="class-select" onchange="loadPupils()" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl p-2.5 font-medium focus:outline-none focus:border-indigo-600">
-                    <option value="Primary 1">Primary 1</option>
-                    <option value="Primary 2">Primary 2</option>
-                    <option value="Primary 3">Primary 3</option>
-                </select>
+        <!-- Daily Summary Analytics Bar -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm text-center">
+                <p class="text-xs font-semibold text-slate-400 uppercase">Total Pupils</p>
+                <p id="stat-total" class="text-xl font-bold text-slate-800">0</p>
             </div>
-            <div class="flex gap-2 w-full sm:w-auto">
-                <button onclick="markAllPresent()" class="flex-1 sm:flex-none bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold px-4 py-2.5 rounded-xl transition">
-                    ✓ Mark All Present
+            <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-100 shadow-sm text-center">
+                <p class="text-xs font-semibold text-emerald-600 uppercase">Present</p>
+                <p id="stat-present" class="text-xl font-bold text-emerald-700">0</p>
+            </div>
+            <div class="bg-amber-50 p-3.5 rounded-2xl border border-amber-100 shadow-sm text-center">
+                <p class="text-xs font-semibold text-amber-600 uppercase">Late</p>
+                <p id="stat-late" class="text-xl font-bold text-amber-700">0</p>
+            </div>
+            <div class="bg-rose-50 p-3.5 rounded-2xl border border-rose-100 shadow-sm text-center">
+                <p class="text-xs font-semibold text-rose-600 uppercase">Absent</p>
+                <p id="stat-absent" class="text-xl font-bold text-rose-700">0</p>
+            </div>
+        </div>
+
+        <!-- Controls & Date Selection Panel -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="grid grid-cols-2 gap-2 w-full md:w-auto">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Class</label>
+                    <select id="class-select" onchange="loadPupils()" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl p-2.5 font-semibold focus:outline-none focus:border-indigo-600">
+                        <option value="Primary 1">Primary 1</option>
+                        <option value="Primary 2">Primary 2</option>
+                        <option value="Primary 3">Primary 3</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Date</label>
+                    <input type="date" id="attendance-date" onchange="loadPupils()" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl p-2 font-semibold focus:outline-none focus:border-indigo-600">
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 w-full md:w-auto justify-end">
+                <button onclick="markAllPresent()" class="flex-1 md:flex-none bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold px-3 py-2.5 rounded-xl transition">
+                    ✓ All Present
                 </button>
-                <button onclick="saveAttendance()" class="flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-md transition">
-                    Save Log
+                <button onclick="exportCSV()" class="flex-1 md:flex-none bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold px-3 py-2.5 rounded-xl transition">
+                    📥 Export CSV
+                </button>
+                <button onclick="saveAttendance()" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-md transition">
+                    💾 Save Log
                 </button>
             </div>
         </div>
 
-        <!-- Pupil List Container -->
+        <!-- Pupil Attendance Cards List -->
         <div id="pupils-container" class="space-y-3">
             <!-- Dynamic pupil cards rendered here -->
         </div>
 
     </main>
 
+    <!-- Modal: Add New Pupil -->
+    <div id="add-pupil-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
+            <h3 class="text-base font-bold text-slate-900 mb-3">Register New Pupil</h3>
+            <form onsubmit="handleAddPupil(event)" class="space-y-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">First Name</label>
+                        <input type="text" id="new-fname" required class="w-full border border-slate-200 rounded-xl p-2 text-xs focus:border-indigo-600 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Last Name</label>
+                        <input type="text" id="new-lname" required class="w-full border border-slate-200 rounded-xl p-2 text-xs focus:border-indigo-600 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Class</label>
+                    <select id="new-class" class="w-full border border-slate-200 rounded-xl p-2 text-xs font-medium focus:border-indigo-600">
+                        <option value="Primary 1">Primary 1</option>
+                        <option value="Primary 2">Primary 2</option>
+                        <option value="Primary 3">Primary 3</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Guardian Name</label>
+                    <input type="text" id="new-gname" required class="w-full border border-slate-200 rounded-xl p-2 text-xs focus:border-indigo-600 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Guardian Phone (with country code)</label>
+                    <input type="tel" id="new-gphone" placeholder="233240000000" required class="w-full border border-slate-200 rounded-xl p-2 text-xs focus:border-indigo-600 focus:outline-none">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeAddPupilModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs py-2 rounded-xl font-semibold">Cancel</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs py-2 rounded-xl font-bold">Save Pupil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE";
         const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
         
-        // Initialize client conditionally
         let db = null;
         if (SUPABASE_URL !== "YOUR_SUPABASE_URL_HERE") {
             db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         }
 
-        // --- LOCAL FALLBACK PINS ---
+        // --- AUTHORIZED FALLBACK PINS ---
         const LOCAL_ALLOWED_PINS = ["2026", "5566", "7788", "1234", "0000"];
 
         // System state
         let currentPin = "";
         let pupilsData = [];
-        let attendanceState = {}; 
+        let attendanceState = {}; // { pupil_id: { status: 'Present'|'Late'|'Absent', remarks: '' } }
 
-        // Set Date
+        // Set default date input to today
+        const todayISO = new Date().toISOString().split('T')[0];
+        document.getElementById('attendance-date').value = todayISO;
         document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('en-GB', {
             weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
         });
 
-        // 1. PIN Authentication with Fallback Support
+        // 1. PIN Authentication
         async function authenticateTeacher() {
             const pinInput = document.getElementById('teacher-pin').value.trim();
             const errorEl = document.getElementById('auth-error');
 
             if (!pinInput) return;
-
             let isValid = false;
 
-            // Step A: Check Supabase if configured
             if (db) {
                 try {
                     const { data, error } = await db
@@ -114,15 +187,12 @@
                         .eq('pin', pinInput)
                         .maybeSingle();
 
-                    if (!error && data) {
-                        isValid = true;
-                    }
+                    if (!error && data) isValid = true;
                 } catch (e) {
-                    console.warn("Database lookup failed, switching to local check.", e);
+                    console.warn("DB check failed, reverting to local check.", e);
                 }
             }
 
-            // Step B: Fallback check against local authorized PIN list
             if (!isValid && LOCAL_ALLOWED_PINS.includes(pinInput)) {
                 isValid = true;
             }
@@ -144,116 +214,165 @@
             document.getElementById('auth-modal').classList.remove('hidden');
         }
 
-        // 2. Fetch Pupils & Existing Logs
+        // 2. Fetch Pupils & Historical Logs
         async function loadPupils() {
             const selectedClass = document.getElementById('class-select').value;
+            const selectedDate = document.getElementById('attendance-date').value;
             const container = document.getElementById('pupils-container');
-            container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">Loading directory...</div>`;
+
+            container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">Loading attendance registry...</div>`;
+
+            let logsMap = {};
 
             if (db) {
-                const { data: pupils, error: pupilErr } = await db
+                // Fetch pupils
+                const { data: pupils } = await db
                     .from('pupils')
                     .select('*')
                     .eq('class_name', selectedClass);
 
-                if (!pupilErr && pupils && pupils.length > 0) {
+                if (pupils && pupils.length > 0) {
                     pupilsData = pupils;
                 } else {
                     pupilsData = getFallbackPupils(selectedClass);
+                }
+
+                // Fetch existing logs for selected date
+                const { data: logs } = await db
+                    .from('attendance_logs')
+                    .select('*')
+                    .eq('date', selectedDate);
+
+                if (logs) {
+                    logs.forEach(l => {
+                        logsMap[l.pupil_id] = { status: l.status, remarks: l.remarks || '' };
+                    });
                 }
             } else {
                 pupilsData = getFallbackPupils(selectedClass);
             }
 
-            // Populate initial attendance state
+            // Populate state
             attendanceState = {};
             pupilsData.forEach(pupil => {
-                attendanceState[pupil.id] = 'Present';
+                const existing = logsMap[pupil.id];
+                attendanceState[pupil.id] = {
+                    status: existing ? existing.status : 'Present',
+                    remarks: existing ? existing.remarks : ''
+                };
             });
 
             renderPupilList();
+            updateAnalytics();
         }
 
-        // Fallback sample data when database is disconnected
-        function getFallbackPupils(className) {
-            return [
-                { id: '1', first_name: 'Kwame', last_name: 'Mensa', class_name: className, guardian_name: 'Mr. Mensa', guardian_phone: '233240000001' },
-                { id: '2', first_name: 'Akosua', last_name: 'Agyei', class_name: className, guardian_name: 'Mrs. Agyei', guardian_phone: '233240000002' },
-                { id: '3', first_name: 'Kofi', last_name: 'Osei', class_name: className, guardian_name: 'Mad. Osei', guardian_phone: '233240000003' }
-            ];
-        }
-
-        // 3. Render Pupils UI
+        // 3. Render Pupil Cards UI
         function renderPupilList() {
             const container = document.getElementById('pupils-container');
             if (pupilsData.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No pupils registered in this class.</div>`;
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No pupils registered in ${document.getElementById('class-select').value}.</div>`;
                 return;
             }
 
             container.innerHTML = pupilsData.map(pupil => {
-                const status = attendanceState[pupil.id];
-                return `
-                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <div>
-                            <h3 class="font-bold text-slate-900">${pupil.first_name} ${pupil.last_name}</h3>
-                            <p class="text-xs text-slate-500">Guardian: ${pupil.guardian_name} (${pupil.guardian_phone})</p>
-                        </div>
-                        
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <div class="inline-flex bg-slate-100 p-1 rounded-xl w-full sm:w-auto justify-between">
-                                <button onclick="setStatus('${pupil.id}', 'Present')" 
-                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${status === 'Present' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}">
-                                    Present
-                                </button>
-                                <button onclick="setStatus('${pupil.id}', 'Late')" 
-                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${status === 'Late' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}">
-                                    Late
-                                </button>
-                                <button onclick="setStatus('${pupil.id}', 'Absent')" 
-                                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${status === 'Absent' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}">
-                                    Absent
-                                </button>
-                            </div>
+                const record = attendanceState[pupil.id] || { status: 'Present', remarks: '' };
+                const status = record.status;
+                const remarks = record.remarks;
 
-                            ${status === 'Absent' ? `
-                                <button onclick="sendWhatsAppAlert('${pupil.first_name}', '${pupil.guardian_phone}')" 
-                                    title="Send WhatsApp Absent Alert" 
-                                    class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 p-2 rounded-xl border border-emerald-200 transition">
-                                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-                                </button>
-                            ` : ''}
+                return `
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <div>
+                                <h3 class="font-bold text-slate-900">${pupil.first_name} ${pupil.last_name}</h3>
+                                <p class="text-xs text-slate-500">Guardian: ${pupil.guardian_name} (${pupil.guardian_phone})</p>
+                            </div>
+                            
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <div class="inline-flex bg-slate-100 p-1 rounded-xl w-full sm:w-auto justify-between">
+                                    <button onclick="setStatus('${pupil.id}', 'Present')" 
+                                        class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${status === 'Present' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}">
+                                        Present
+                                    </button>
+                                    <button onclick="setStatus('${pupil.id}', 'Late')" 
+                                        class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${status === 'Late' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}">
+                                        Late
+                                    </button>
+                                    <button onclick="setStatus('${pupil.id}', 'Absent')" 
+                                        class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${status === 'Absent' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}">
+                                        Absent
+                                    </button>
+                                </div>
+
+                                ${status === 'Absent' ? `
+                                    <button onclick="sendWhatsAppAlert('${pupil.first_name}', '${pupil.guardian_phone}')" 
+                                        title="Send WhatsApp Absent Alert" 
+                                        class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 p-2 rounded-xl border border-emerald-200 transition">
+                                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Remarks / Notes Bar -->
+                        <div class="pt-2 border-t border-slate-100">
+                            <input type="text" value="${remarks}" placeholder="Add remark (e.g., Sick, Doctor's appointment)..."
+                                onchange="setRemarks('${pupil.id}', this.value)"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // 4. Update Status State
+        // 4. Update State & Realtime Stats
         function setStatus(pupilId, status) {
-            attendanceState[pupilId] = status;
+            attendanceState[pupilId].status = status;
             renderPupilList();
+            updateAnalytics();
+        }
+
+        function setRemarks(pupilId, text) {
+            attendanceState[pupilId].remarks = text;
         }
 
         function markAllPresent() {
-            pupilsData.forEach(pupil => {
-                attendanceState[pupil.id] = 'Present';
+            pupilsData.forEach(p => {
+                attendanceState[p.id].status = 'Present';
             });
             renderPupilList();
+            updateAnalytics();
         }
 
-        // 5. Commit Logs
+        function updateAnalytics() {
+            const total = pupilsData.length;
+            let present = 0, late = 0, absent = 0;
+
+            Object.values(attendanceState).forEach(rec => {
+                if (rec.status === 'Present') present++;
+                else if (rec.status === 'Late') late++;
+                else if (rec.status === 'Absent') absent++;
+            });
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-present').innerText = present;
+            document.getElementById('stat-late').innerText = late;
+            document.getElementById('stat-absent').innerText = absent;
+        }
+
+        // 5. Commit Logs to Database
         async function saveAttendance() {
+            const selectedDate = document.getElementById('attendance-date').value;
+
             if (!db) {
-                alert("Saved locally! (To sync with Supabase cloud, add your project API keys in index.html)");
+                alert("Attendance recorded locally! (Connect Supabase API keys in index.html to sync with cloud)");
                 return;
             }
 
-            const todayStr = new Date().toISOString().split('T')[0];
             const records = Object.keys(attendanceState).map(pupilId => ({
                 pupil_id: pupilId,
-                date: todayStr,
-                status: attendanceState[pupilId],
+                date: selectedDate,
+                status: attendanceState[pupilId].status,
+                remarks: attendanceState[pupilId].remarks,
                 teacher_pin: currentPin
             }));
 
@@ -262,19 +381,86 @@
                 .upsert(records, { onConflict: 'pupil_id,date' });
 
             if (error) {
-                alert("Error saving log: " + error.message);
+                alert("Error saving: " + error.message);
             } else {
-                alert("Attendance saved successfully!");
+                alert(`Attendance saved for ${selectedDate}!`);
             }
         }
 
-        // 6. WhatsApp Link
+        // 6. Export Attendance CSV
+        function exportCSV() {
+            const selectedClass = document.getElementById('class-select').value;
+            const selectedDate = document.getElementById('attendance-date').value;
+
+            let csvContent = "data:text/csv;charset=utf-8,Class,Date,Pupil Name,Guardian Name,Guardian Phone,Status,Remarks\n";
+
+            pupilsData.forEach(p => {
+                const rec = attendanceState[p.id] || { status: 'Present', remarks: '' };
+                const row = `"${selectedClass}","${selectedDate}","${p.first_name} ${p.last_name}","${p.guardian_name}","${p.guardian_phone}","${rec.status}","${rec.remarks}"`;
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Attendance_${selectedClass.replace(' ','_')}_${selectedDate}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 7. Pupil Registration Modal Handlers
+        function openAddPupilModal() {
+            document.getElementById('add-pupil-modal').classList.remove('hidden');
+        }
+
+        function closeAddPupilModal() {
+            document.getElementById('add-pupil-modal').classList.add('hidden');
+        }
+
+        async function handleAddPupil(e) {
+            e.preventDefault();
+            const fname = document.getElementById('new-fname').value.trim();
+            const lname = document.getElementById('new-lname').value.trim();
+            const className = document.getElementById('new-class').value;
+            const gname = document.getElementById('new-gname').value.trim();
+            const gphone = document.getElementById('new-gphone').value.trim();
+
+            const newPupil = {
+                first_name: fname,
+                last_name: lname,
+                class_name: className,
+                guardian_name: gname,
+                guardian_phone: gphone
+            };
+
+            if (db) {
+                const { error } = await db.from('pupils').insert([newPupil]);
+                if (error) {
+                    alert("Error registering pupil: " + error.message);
+                    return;
+                }
+            }
+
+            alert("Pupil registered successfully!");
+            closeAddPupilModal();
+            loadPupils();
+        }
+
+        // Fallback sample pupils
+        function getFallbackPupils(className) {
+            return [
+                { id: '1', first_name: 'Kwame', last_name: 'Mensa', class_name: className, guardian_name: 'Mr. Mensa', guardian_phone: '233240000001' },
+                { id: '2', first_name: 'Akosua', last_name: 'Agyei', class_name: className, guardian_name: 'Mrs. Agyei', guardian_phone: '233240000002' },
+                { id: '3', first_name: 'Kofi', last_name: 'Osei', class_name: className, guardian_name: 'Mad. Osei', guardian_phone: '233240000003' }
+            ];
+        }
+
+        // WhatsApp direct link
         function sendWhatsAppAlert(pupilName, phone) {
-            const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-            const message = `Hello, this is an automated attendance notice. Please be informed that ${pupilName} was marked ABSENT today (${dateStr}). Kindly contact the school administration if you have any questions.`;
-            
-            const encodedMessage = encodeURIComponent(message);
-            window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+            const dateVal = document.getElementById('attendance-date').value;
+            const message = `Hello, this is an automated attendance notice. Please be informed that ${pupilName} was marked ABSENT today (${dateVal}). Kindly contact the school administration if you have any questions.`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
         }
     </script>
 </body>
