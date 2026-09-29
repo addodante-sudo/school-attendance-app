@@ -28,7 +28,7 @@
                 <!-- Supabase Cloud Connection Status Indicator -->
                 <div id="cloud-status-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-900/60 text-indigo-200 border border-indigo-500/40">
                     <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
-                    <span id="cloud-status-text" class="hidden sm:inline">Checking...</span>
+                    <span id="cloud-status-text" class="hidden sm:inline">Connecting...</span>
                 </div>
 
                 <!-- Dark Mode Toggle Button -->
@@ -38,32 +38,11 @@
                 </button>
 
                 <button onclick="openAddPupilModal()" class="bg-indigo-600 dark:bg-indigo-800 hover:bg-indigo-800 text-white text-xs px-3 py-2 rounded-xl border border-indigo-400 font-semibold transition">
-                    + Pupil
-                </button>
-                <button onclick="logoutTeacher()" class="bg-indigo-900 dark:bg-slate-950 hover:bg-slate-900 text-xs px-3 py-2 rounded-xl border border-indigo-500 transition">
-                    Lock
+                    + Add Pupil
                 </button>
             </div>
         </div>
     </header>
-
-    <!-- PIN Authentication Modal -->
-    <div id="auth-modal" class="fixed inset-0 bg-slate-900/80 dark:bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-sm text-center border border-slate-100 dark:border-slate-700">
-            <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-3 font-bold text-xl">🔒</div>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Staff Verification</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Enter your 4-digit staff PIN to unlock registry.</p>
-            
-            <input type="password" id="teacher-pin" maxlength="4" placeholder="••••" autofocus
-                onkeyup="if(event.key==='Enter') authenticateTeacher()"
-                class="w-full text-center text-2xl tracking-widest border-2 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl py-2 mb-4 focus:border-indigo-600 focus:outline-none">
-            
-            <button onclick="authenticateTeacher()" class="w-full bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-xl transition">
-                Authenticate
-            </button>
-            <p id="auth-error" class="text-xs text-rose-500 mt-2 hidden">Invalid PIN. Please try again.</p>
-        </div>
-    </div>
 
     <!-- Main Content Container -->
     <main class="max-w-4xl mx-auto p-4 space-y-4">
@@ -183,44 +162,11 @@
 
         initTheme();
 
-        // --- SUPABASE & CLOUD INDICATOR CONFIGURATION ---
+        // --- SUPABASE & API CONFIGURATION ---
         const SUPABASE_URL = "https://lzszyolecmxbdrteik.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6c3p5b2xlY214eGJkdHJ0ZWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mjk1NzcsImV4cCI6MjEwNjAwNTU3N30.rK5UBp0Vu5Of6pFqcxVhIZMfd0e2ZXZ3ha-8oVW4bHE";
         
         let db = null;
-        const LOCAL_ALLOWED_PINS = ["2026", "5566", "7788", "1234", "0000"];
-
-        async function checkCloudConnection() {
-            const badge = document.getElementById('cloud-status-badge');
-            const dot = document.getElementById('cloud-status-dot');
-            const text = document.getElementById('cloud-status-text');
-
-            if (SUPABASE_URL !== "YOUR_SUPABASE_URL_HERE" && SUPABASE_KEY !== "YOUR_SUPABASE_ANON_KEY_HERE") {
-                try {
-                    db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                    const { error } = await db.from('teachers').select('id').limit(1);
-
-                    if (!error) {
-                        badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-600/50";
-                        dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
-                        text.innerText = "Cloud Sync";
-                        return;
-                    }
-                } catch (e) {
-                    console.warn("Cloud connection check failed:", e);
-                }
-            }
-
-            // Default to Local Mode
-            badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700";
-            dot.className = "w-2 h-2 rounded-full bg-slate-400";
-            text.innerText = "Local Mode";
-        }
-
-        checkCloudConnection();
-
-        // System State
-        let currentPin = "";
         let pupilsData = [];
         let attendanceState = {}; 
 
@@ -231,50 +177,38 @@
             weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
         });
 
-        // 1. PIN Authentication
-        async function authenticateTeacher() {
-            const pinInput = document.getElementById('teacher-pin').value.trim();
-            const errorEl = document.getElementById('auth-error');
+        // Initialize Supabase & Load Registry Automatically
+        async function initApp() {
+            const badge = document.getElementById('cloud-status-badge');
+            const dot = document.getElementById('cloud-status-dot');
+            const text = document.getElementById('cloud-status-text');
 
-            if (!pinInput) return;
-            let isValid = false;
+            try {
+                db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                const { error } = await db.from('pupils').select('id').limit(1);
 
-            if (db) {
-                try {
-                    const { data, error } = await db
-                        .from('teachers')
-                        .select('*')
-                        .eq('pin', pinInput)
-                        .maybeSingle();
-
-                    if (!error && data) isValid = true;
-                } catch (e) {
-                    console.warn("DB check failed, switching to local backup.", e);
+                if (!error) {
+                    badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-600/50";
+                    dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+                    text.innerText = "Cloud Active";
+                } else {
+                    setLocalModeBadge(badge, dot, text);
                 }
+            } catch (e) {
+                console.warn("Cloud connection check failed, using fallback:", e);
+                setLocalModeBadge(badge, dot, text);
             }
 
-            if (!isValid && LOCAL_ALLOWED_PINS.includes(pinInput)) {
-                isValid = true;
-            }
-
-            if (isValid) {
-                currentPin = pinInput;
-                document.getElementById('auth-modal').classList.add('hidden');
-                document.getElementById('teacher-pin').value = '';
-                errorEl.classList.add('hidden');
-                loadPupils();
-            } else {
-                errorEl.innerText = "Invalid PIN. Please try again.";
-                errorEl.classList.remove('hidden');
-            }
+            loadPupils();
         }
 
-        function logoutTeacher() {
-            currentPin = "";
-            document.getElementById('auth-modal').classList.remove('hidden');
+        function setLocalModeBadge(badge, dot, text) {
+            badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700";
+            dot.className = "w-2 h-2 rounded-full bg-slate-400";
+            text.innerText = "Local Mode";
         }
 
-        // 2. Fetch Pupils & Existing Records
+        // Fetch Pupils & Existing Records
         async function loadPupils() {
             const selectedClass = document.getElementById('class-select').value;
             const selectedDate = document.getElementById('attendance-date').value;
@@ -323,7 +257,7 @@
             updateAnalytics();
         }
 
-        // 3. Render Cards
+        // Render Pupil Cards
         function renderPupilList() {
             const container = document.getElementById('pupils-container');
             if (pupilsData.length === 0) {
@@ -380,7 +314,7 @@
             }).join('');
         }
 
-        // 4. Update State & Analytics
+        // State & Analytics
         function setStatus(pupilId, status) {
             attendanceState[pupilId].status = status;
             renderPupilList();
@@ -415,7 +349,7 @@
             document.getElementById('stat-absent').innerText = absent;
         }
 
-        // 5. Commit Logs
+        // Save Attendance
         async function saveAttendance() {
             const selectedDate = document.getElementById('attendance-date').value;
 
@@ -428,8 +362,7 @@
                 pupil_id: pupilId,
                 date: selectedDate,
                 status: attendanceState[pupilId].status,
-                remarks: attendanceState[pupilId].remarks,
-                teacher_pin: currentPin
+                remarks: attendanceState[pupilId].remarks
             }));
 
             const { error } = await db
@@ -443,7 +376,7 @@
             }
         }
 
-        // 6. CSV Export
+        // CSV Export
         function exportCSV() {
             const selectedClass = document.getElementById('class-select').value;
             const selectedDate = document.getElementById('attendance-date').value;
@@ -465,7 +398,7 @@
             document.body.removeChild(link);
         }
 
-        // 7. Modal Handlers
+        // Pupil Modal Handlers
         function openAddPupilModal() {
             document.getElementById('add-pupil-modal').classList.remove('hidden');
         }
@@ -516,6 +449,9 @@
             const message = `Hello, this is an automated attendance notice. Please be informed that ${pupilName} was marked ABSENT today (${dateVal}). Kindly contact the school administration if you have any questions.`;
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
         }
+
+        // Initialize App on Page Load
+        window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
