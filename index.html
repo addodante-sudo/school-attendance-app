@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pupil Attendance Tracker</title>
+    <title>Addodante Hub - Attendance Registry</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -13,10 +13,14 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#f0f9ff',
-                            500: '#0284c7',
-                            600: '#0284c7',
-                            700: '#0369a1',
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '#1a7930', /* Addodante Hub Primary Green */
+                            600: '#156327',
+                            700: '#104d1e',
+                            800: '#0c3816',
+                            900: '#07220d',
                         }
                     }
                 }
@@ -32,11 +36,17 @@
     <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm transition-colors">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="bg-indigo-600 text-white p-2 rounded-xl font-bold text-lg">
-                    📋
+                <!-- Addodante Hub Icon Badge -->
+                <div class="bg-brand-500 text-white p-2.5 rounded-2xl font-bold text-lg shadow-md shadow-brand-500/20 flex items-center justify-center">
+                    <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold leading-tight text-slate-900 dark:text-white">Class Register</h1>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-bold uppercase tracking-wider text-brand-500 dark:text-emerald-400">Addodante Hub</span>
+                    </div>
+                    <h1 class="text-lg font-bold leading-tight text-slate-900 dark:text-white">Attendance Registry</h1>
                     <p id="current-date-display" class="text-xs text-slate-500 dark:text-slate-400">Loading date...</p>
                 </div>
             </div>
@@ -63,7 +73,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
             <div>
                 <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Select Class</label>
-                <select id="class-select" onchange="loadPupils()" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <select id="class-select" onchange="loadPupils()" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
                     <option value="Basic 1">Basic 1</option>
                     <option value="Basic 2">Basic 2</option>
                     <option value="Basic 3">Basic 3</option>
@@ -75,7 +85,7 @@
 
             <div>
                 <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Select Date</label>
-                <input type="date" id="attendance-date" onchange="loadPupils()" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="date" id="attendance-date" onchange="loadPupils()" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
             </div>
         </div>
 
@@ -108,13 +118,13 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <button onclick="openAddPupilModal()" class="px-3.5 py-2 text-xs font-semibold bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 rounded-xl transition">
+                <button onclick="openAddPupilModal()" class="px-3.5 py-2 text-xs font-semibold bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-emerald-300 hover:bg-brand-100 rounded-xl transition border border-brand-200 dark:border-brand-800">
                     + Add Pupil
                 </button>
                 <button onclick="exportCSV()" class="px-3.5 py-2 text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 rounded-xl transition">
                     📥 CSV
                 </button>
-                <button onclick="saveAttendance()" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md transition">
+                <button onclick="saveAttendance()" class="px-4 py-2 text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white rounded-xl shadow-md shadow-brand-500/20 transition">
                     Save Attendance
                 </button>
             </div>
@@ -130,22 +140,26 @@
     <div id="add-pupil-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
-                <h3 class="font-bold text-slate-900 dark:text-white">Register New Pupil</h3>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-brand-500 uppercase tracking-wider">Addodante Hub</span>
+                    <span class="text-slate-300 dark:text-slate-600">•</span>
+                    <h3 class="font-bold text-slate-900 dark:text-white">Register Pupil</h3>
+                </div>
                 <button onclick="closeAddPupilModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
             </div>
 
             <form onsubmit="handleAddPupil(event)" class="space-y-3">
                 <div>
                     <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">First Name</label>
-                    <input type="text" id="new-fname" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="new-fname" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Last Name</label>
-                    <input type="text" id="new-lname" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="new-lname" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Class</label>
-                    <select id="new-class" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <select id="new-class" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                         <option value="Basic 1">Basic 1</option>
                         <option value="Basic 2">Basic 2</option>
                         <option value="Basic 3">Basic 3</option>
@@ -156,16 +170,16 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Guardian Name</label>
-                    <input type="text" id="new-gname" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="new-gname" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Guardian Phone (with country code, e.g. 233...)</label>
-                    <input type="tel" id="new-gphone" required placeholder="233240000000" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Guardian Phone (e.g. 233240000000)</label>
+                    <input type="tel" id="new-gphone" required placeholder="233240000000" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="closeAddPupilModal()" class="px-4 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl">Cancel</button>
-                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl shadow-md hover:bg-indigo-700">Save Pupil</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white rounded-xl shadow-md">Save Pupil</button>
                 </div>
             </form>
         </div>
@@ -208,7 +222,7 @@
             weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
         });
 
-        // Fast Startup Initialization
+        // Startup Initialization
         async function initApp() {
             try {
                 if (window.supabase) {
@@ -218,10 +232,10 @@
                 console.warn("Supabase init error:", e);
             }
 
-            // Immediately trigger pupil fetch
+            // Immediately load cached or remote pupil data
             loadPupils();
 
-            // Check connection status in background (non-blocking)
+            // Background connection check
             checkConnectionStatus();
         }
 
@@ -255,7 +269,7 @@
             text.innerText = "Local Mode";
         }
 
-        // Optimized Parallel Fetching with Instant Cache
+        // Parallel Fetching with Instant Local Cache
         async function loadPupils() {
             const selectedClass = document.getElementById('class-select').value;
             const selectedDate = document.getElementById('attendance-date').value;
@@ -277,7 +291,7 @@
                 container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">Loading attendance registry...</div>`;
             }
 
-            // 2. Query Supabase in PARALLEL using Promise.all
+            // 2. Query Supabase in PARALLEL
             if (db) {
                 try {
                     const [pupilsRes, logsRes] = await Promise.all([
@@ -311,7 +325,7 @@
                     renderPupilList();
                     updateAnalytics();
                 } catch (err) {
-                    console.error("Parallel fetch failed:", err);
+                    console.error("Parallel fetch error:", err);
                 }
             } else if (!cached) {
                 pupilsData = getFallbackPupils(selectedClass);
@@ -370,7 +384,7 @@
                         <div class="pt-2 border-t border-slate-100 dark:border-slate-700">
                             <input type="text" value="${remarks}" placeholder="Add remark (e.g., Sick, Traffic)..."
                                 onchange="setRemarks('${pupil.id}', this.value)"
-                                class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:border-indigo-500">
+                                class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-2.5 py-1 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:border-brand-500">
                         </div>
                     </div>
                 `;
@@ -455,7 +469,7 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Attendance_${selectedClass.replace(' ','_')}_${selectedDate}.csv`);
+            link.setAttribute("download", `AddodanteHub_Attendance_${selectedClass.replace(' ','_')}_${selectedDate}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -509,7 +523,7 @@
 
         function sendWhatsAppAlert(pupilName, phone) {
             const dateVal = document.getElementById('attendance-date').value;
-            const message = `Hello, this is an automated attendance notice. Please be informed that ${pupilName} was marked ABSENT today (${dateVal}). Kindly contact the school administration if you have any questions.`;
+            const message = `Hello, this is an automated attendance notice from Addodante Hub. Please be informed that ${pupilName} was marked ABSENT today (${dateVal}). Kindly contact the school administration if you have any questions.`;
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
         }
 
