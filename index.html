@@ -1,4 +1,178 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pupil Attendance Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm transition-colors">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-xl font-bold text-lg">
+                    📋
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight text-slate-900 dark:text-white">Class Register</h1>
+                    <p id="current-date-display" class="text-xs text-slate-500 dark:text-slate-400">Loading date...</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Cloud Status Badge -->
+                <div id="cloud-status-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                    <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                    <span id="cloud-status-text" class="text-[10px] sm:text-xs">Connecting...</span>
+                </div>
+
+                <!-- Theme Toggle Button -->
+                <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition">
+                    <span id="theme-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+
+        <!-- Controls Section (Class & Date Selector) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
+            <div>
+                <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Select Class</label>
+                <select id="class-select" onchange="loadPupils()" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="Basic 1">Basic 1</option>
+                    <option value="Basic 2">Basic 2</option>
+                    <option value="Basic 3">Basic 3</option>
+                    <option value="Basic 4">Basic 4</option>
+                    <option value="Basic 5">Basic 5</option>
+                    <option value="Basic 6">Basic 6</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Select Date</label>
+                <input type="date" id="attendance-date" onchange="loadPupils()" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+        </div>
+
+        <!-- Attendance Summary Metrics -->
+        <div class="grid grid-cols-4 gap-2 sm:gap-4">
+            <div class="bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-center shadow-sm">
+                <span class="block text-xs text-slate-500 dark:text-slate-400 font-medium">Total</span>
+                <span id="stat-total" class="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-white">0</span>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 text-center shadow-sm bg-emerald-50/30 dark:bg-emerald-950/20">
+                <span class="block text-xs text-emerald-600 dark:text-emerald-400 font-medium">Present</span>
+                <span id="stat-present" class="text-lg sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">0</span>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-2xl border border-amber-200 dark:border-amber-900/50 text-center shadow-sm bg-amber-50/30 dark:bg-amber-950/20">
+                <span class="block text-xs text-amber-600 dark:text-amber-400 font-medium">Late</span>
+                <span id="stat-late" class="text-lg sm:text-2xl font-extrabold text-amber-600 dark:text-amber-400">0</span>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-2xl border border-rose-200 dark:border-rose-900/50 text-center shadow-sm bg-rose-50/30 dark:bg-rose-950/20">
+                <span class="block text-xs text-rose-600 dark:text-rose-400 font-medium">Absent</span>
+                <span id="stat-absent" class="text-lg sm:text-2xl font-extrabold text-rose-600 dark:text-rose-400">0</span>
+            </div>
+        </div>
+
+        <!-- Quick Action Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <button onclick="markAllPresent()" class="px-3.5 py-2 text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 rounded-xl transition">
+                    ✓ Mark All Present
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="openAddPupilModal()" class="px-3.5 py-2 text-xs font-semibold bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 rounded-xl transition">
+                    + Add Pupil
+                </button>
+                <button onclick="exportCSV()" class="px-3.5 py-2 text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 rounded-xl transition">
+                    📥 CSV
+                </button>
+                <button onclick="saveAttendance()" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md transition">
+                    Save Attendance
+                </button>
+            </div>
+        </div>
+
+        <!-- Pupil List Container -->
+        <div id="pupils-container" class="space-y-3">
+            <div class="text-center py-8 text-slate-400 text-sm">Loading attendance registry...</div>
+        </div>
+    </main>
+
+    <!-- Add Pupil Modal -->
+    <div id="add-pupil-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-slate-900 dark:text-white">Register New Pupil</h3>
+                <button onclick="closeAddPupilModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
+
+            <form onsubmit="handleAddPupil(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">First Name</label>
+                    <input type="text" id="new-fname" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Last Name</label>
+                    <input type="text" id="new-lname" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Class</label>
+                    <select id="new-class" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="Basic 1">Basic 1</option>
+                        <option value="Basic 2">Basic 2</option>
+                        <option value="Basic 3">Basic 3</option>
+                        <option value="Basic 4">Basic 4</option>
+                        <option value="Basic 5">Basic 5</option>
+                        <option value="Basic 6">Basic 6</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Guardian Name</label>
+                    <input type="text" id="new-gname" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Guardian Phone (with country code, e.g. 233...)</label>
+                    <input type="tel" id="new-gphone" required placeholder="233240000000" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAddPupilModal()" class="px-4 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl shadow-md hover:bg-indigo-700">Save Pupil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
         // --- DARK MODE CONTROLLER ---
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
@@ -37,7 +211,9 @@
         // Fast Startup Initialization
         async function initApp() {
             try {
-                db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                if (window.supabase) {
+                    db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                }
             } catch (e) {
                 console.warn("Supabase init error:", e);
             }
@@ -59,12 +235,16 @@
                 return;
             }
 
-            const { error } = await db.from('pupils').select('id').limit(1);
-            if (!error) {
-                badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-600/50";
-                dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
-                text.innerText = "Cloud Active";
-            } else {
+            try {
+                const { error } = await db.from('pupils').select('id').limit(1);
+                if (!error) {
+                    badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-600/50";
+                    dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+                    text.innerText = "Cloud Active";
+                } else {
+                    setLocalModeBadge(badge, dot, text);
+                }
+            } catch (e) {
                 setLocalModeBadge(badge, dot, text);
             }
         }
@@ -336,3 +516,5 @@
         // Initialize App on Page Load
         window.addEventListener('DOMContentLoaded', initApp);
     </script>
+</body>
+</html>
