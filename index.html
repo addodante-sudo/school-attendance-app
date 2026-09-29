@@ -207,7 +207,7 @@
 
         initTheme();
 
-        // --- UPDATED SUPABASE CONFIGURATION ---
+        // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = "https://lzszyolecmxxbdtrteik.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6c3p5b2xlY214eGJkdHJ0ZWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mjk1NzcsImV4cCI6MjEwNjAwNTU3N30.rK5UBp0Vu5Of6pFqcxVhIZMfd0e2ZXZ3ha-8oVW4bHE";
         
@@ -232,11 +232,28 @@
                 console.warn("Supabase init error:", e);
             }
 
-            // Immediately load cached or remote pupil data
+            // Clean up legacy non-UUID cached data if present
+            clearLegacyCache();
+
+            // Load pupil data
             loadPupils();
 
             // Background connection check
             checkConnectionStatus();
+        }
+
+        function clearLegacyCache() {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('cache_pupils_')) {
+                    try {
+                        const parsed = JSON.parse(localStorage.getItem(key));
+                        if (Array.isArray(parsed) && parsed.some(p => p.id && !p.id.includes('-'))) {
+                            localStorage.removeItem(key);
+                        }
+                    } catch (e) {}
+                }
+            }
         }
 
         async function checkConnectionStatus() {
@@ -269,7 +286,7 @@
             text.innerText = "Local Mode";
         }
 
-        // Parallel Fetching with Instant Local Cache
+        // Fetch Pupils & Attendance
         async function loadPupils() {
             const selectedClass = document.getElementById('class-select').value;
             const selectedDate = document.getElementById('attendance-date').value;
@@ -291,7 +308,7 @@
                 container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">Loading attendance registry...</div>`;
             }
 
-            // 2. Query Supabase in PARALLEL
+            // 2. Query Supabase
             if (db) {
                 try {
                     const [pupilsRes, logsRes] = await Promise.all([
@@ -435,21 +452,41 @@
                 return;
             }
 
-            const records = Object.keys(attendanceState).map(pupilId => ({
-                pupil_id: pupilId,
-                date: selectedDate,
-                status: attendanceState[pupilId].status,
-                remarks: attendanceState[pupilId].remarks
-            }));
+            try {
+                // First, ensure all current pupils exist in the 'pupils' table
+                const pupilsToUpsert = pupilsData.map(p => ({
+                    id: p.id,
+                    first_name: p.first_name,
+                    last_name: p.last_name,
+                    class_name: p.class_name,
+                    guardian_name: p.guardian_name,
+                    guardian_phone: p.guardian_phone
+                }));
 
-            const { error } = await db
-                .from('attendance_logs')
-                .upsert(records, { onConflict: 'pupil_id,date' });
+                const { error: pupilErr } = await db.from('pupils').upsert(pupilsToUpsert, { onConflict: 'id' });
+                if (pupilErr) {
+                    console.warn("Pupil sync note:", pupilErr.message);
+                }
 
-            if (error) {
-                alert("Error saving: " + error.message);
-            } else {
-                alert(`Attendance saved for ${selectedDate}!`);
+                // Upsert attendance records
+                const records = Object.keys(attendanceState).map(pupilId => ({
+                    pupil_id: pupilId,
+                    date: selectedDate,
+                    status: attendanceState[pupilId].status,
+                    remarks: attendanceState[pupilId].remarks
+                }));
+
+                const { error } = await db
+                    .from('attendance_logs')
+                    .upsert(records, { onConflict: 'pupil_id,date' });
+
+                if (error) {
+                    alert("Error saving: " + error.message);
+                } else {
+                    alert(`Attendance saved successfully for ${selectedDate}!`);
+                }
+            } catch (err) {
+                alert("Save error: " + err.message);
             }
         }
 
@@ -509,15 +546,22 @@
             }
 
             alert("Pupil registered successfully!");
+            
+            // Clear form fields
+            document.getElementById('new-fname').value = '';
+            document.getElementById('new-lname').value = '';
+            document.getElementById('new-gname').value = '';
+            document.getElementById('new-gphone').value = '';
+            
             closeAddPupilModal();
             loadPupils();
         }
 
         function getFallbackPupils(className) {
             return [
-                { id: '1', first_name: 'Kwame', last_name: 'Mensa', class_name: className, guardian_name: 'Mr. Mensa', guardian_phone: '233240000001' },
-                { id: '2', first_name: 'Akosua', last_name: 'Agyei', class_name: className, guardian_name: 'Mrs. Agyei', guardian_phone: '233240000002' },
-                { id: '3', first_name: 'Kofi', last_name: 'Osei', class_name: className, guardian_name: 'Mad. Osei', guardian_phone: '233240000003' }
+                { id: '10000000-0000-0000-0000-000000000001', first_name: 'Kwame', last_name: 'Mensa', class_name: className, guardian_name: 'Mr. Mensa', guardian_phone: '233240000001' },
+                { id: '10000000-0000-0000-0000-000000000002', first_name: 'Akosua', last_name: 'Agyei', class_name: className, guardian_name: 'Mrs. Agyei', guardian_phone: '233240000002' },
+                { id: '10000000-0000-0000-0000-000000000003', first_name: 'Kofi', last_name: 'Osei', class_name: className, guardian_name: 'Mad. Osei', guardian_phone: '233240000003' }
             ];
         }
 
