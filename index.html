@@ -18,13 +18,19 @@
 
     <!-- Header Navigation -->
     <header class="bg-indigo-700 dark:bg-indigo-950 text-white p-4 shadow-md sticky top-0 z-20 transition-colors">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
+        <div class="max-w-4xl mx-auto flex justify-between items-center gap-2">
             <div>
                 <h1 class="text-xl font-bold tracking-wide">Attendance Registry</h1>
                 <p class="text-xs text-indigo-200 dark:text-indigo-300" id="current-date-display"></p>
             </div>
             
             <div class="flex items-center gap-2">
+                <!-- Supabase Cloud Connection Status Indicator -->
+                <div id="cloud-status-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-900/60 text-indigo-200 border border-indigo-500/40">
+                    <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <span id="cloud-status-text" class="hidden sm:inline">Checking...</span>
+                </div>
+
                 <!-- Dark Mode Toggle Button -->
                 <button onclick="toggleDarkMode()" id="theme-toggle-btn" title="Toggle Theme"
                     class="p-2 rounded-xl bg-indigo-800 dark:bg-indigo-900 hover:bg-indigo-900 dark:hover:bg-indigo-800 text-amber-300 transition-colors border border-indigo-600 dark:border-indigo-700">
@@ -177,16 +183,41 @@
 
         initTheme();
 
-        // --- SUPABASE & LOCAL FALLBACK CONFIGURATION ---
-        const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE";
-        const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
+        // --- SUPABASE & CLOUD INDICATOR CONFIGURATION ---
+        const SUPABASE_URL = "https://lzszyolecmxbdrteik.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6c3p5b2xlY214eGJkdHJ0ZWlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mjk1NzcsImV4cCI6MjEwNjAwNTU3N30.rK5UBp0Vu5Of6pFqcxVhIZMfd0e2ZXZ3ha-8oVW4bHE";
         
         let db = null;
-        if (SUPABASE_URL !== "YOUR_SUPABASE_URL_HERE") {
-            db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const LOCAL_ALLOWED_PINS = ["2026", "5566", "7788", "1234", "0000"];
+
+        async function checkCloudConnection() {
+            const badge = document.getElementById('cloud-status-badge');
+            const dot = document.getElementById('cloud-status-dot');
+            const text = document.getElementById('cloud-status-text');
+
+            if (SUPABASE_URL !== "YOUR_SUPABASE_URL_HERE" && SUPABASE_KEY !== "YOUR_SUPABASE_ANON_KEY_HERE") {
+                try {
+                    db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    const { error } = await db.from('teachers').select('id').limit(1);
+
+                    if (!error) {
+                        badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-600/50";
+                        dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+                        text.innerText = "Cloud Sync";
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Cloud connection check failed:", e);
+                }
+            }
+
+            // Default to Local Mode
+            badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700";
+            dot.className = "w-2 h-2 rounded-full bg-slate-400";
+            text.innerText = "Local Mode";
         }
 
-        const LOCAL_ALLOWED_PINS = ["2026", "5566", "7788", "1234", "0000"];
+        checkCloudConnection();
 
         // System State
         let currentPin = "";
